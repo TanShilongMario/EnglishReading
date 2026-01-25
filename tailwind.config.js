@@ -11,7 +11,7 @@ export default {
         'luxury-paper': '#EBE5DE',   // 浅褐灰
         'luxury-text': '#1A1A1A',    // 深炭黑
         'luxury-muted': '#6C6863',   // 暖灰
-        'luxury-gold': '#D4AF37',    // 金属金
+        'luxury-gold': '#E2B933',    // 金属金
       },
       fontFamily: {
         'serif': ['"Playfair Display"', 'STSong', '"Songti SC"', 'SimSun', 'serif'],

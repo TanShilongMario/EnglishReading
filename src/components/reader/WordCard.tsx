@@ -42,7 +42,14 @@ export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
         {parts.map((part, i) => {
           const isMatch = searchTerms.some(term => term.toLowerCase() === part.toLowerCase());
           return isMatch ? (
-            <span key={i} className="text-luxury-gold font-bold underline decoration-luxury-gold/30 underline-offset-4">
+            <span 
+              key={i} 
+              className="font-bold underline underline-offset-4"
+              style={{ 
+                color: word.color || '#E2B933',
+                textDecorationColor: `${word.color || '#E2B933'}4D`
+              }}
+            >
               {part}
             </span>
           ) : (
@@ -72,14 +79,17 @@ export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-4">
             <header className="mb-16 space-y-4">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">Vocabulary Entry</span>
-              <h2 className="text-7xl font-serif leading-none tracking-tighter">{word.word}</h2>
+              <span className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: word.color || '#E2B933' }}>Vocabulary Entry</span>
+              <h2 className="text-7xl font-serif leading-none tracking-tighter" style={{ color: word.color || '#E2B933' }}>{word.word}</h2>
               <div className="flex items-center gap-4 text-luxury-muted font-serif italic text-xl">
                 {word.partOfSpeech && (
                   <span className="text-luxury-muted/60">{word.partOfSpeech}</span>
                 )}
                 <p>{word.phonetic}</p>
-                <button className="hover:text-luxury-gold transition-colors">
+                <button 
+                  className="transition-colors"
+                  style={{ color: word.color || '#E2B933' }}
+                >
                   <Volume2 size={18} strokeWidth={1.5} />
                 </button>
               </div>
@@ -97,7 +107,11 @@ export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
                 <section className="space-y-8">
                   <div className="space-y-10">
                     {word.examples.map((example, i) => (
-                      <div key={i} className="relative pl-8 border-l-2 border-luxury-gold/20 group">
+                      <div 
+                        key={i} 
+                        className="relative pl-8 border-l-2 group"
+                        style={{ borderLeftColor: `${word.color || '#E2B933'}4D` }}
+                      >
                         <p className="text-lg font-sans leading-relaxed text-luxury-muted group-hover:text-luxury-text transition-colors duration-500 text-left">
                           {renderHighlightedExample(example, word.word, word.matchPattern)}
                         </p>

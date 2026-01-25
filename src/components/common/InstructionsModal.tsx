@@ -122,33 +122,51 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                       </div>
 
                       <div className="relative pl-8 space-y-12 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-luxury-text/10">
+                        {/* v1.1.0 */}
                         <div className="relative">
                           <div className="absolute -left-[35px] top-1.5 w-3 h-3 bg-luxury-gold border-2 border-luxury-bg rounded-full shadow-sm" />
                           <div className="space-y-4">
                             <div className="flex flex-col">
-                              <span className="text-xl font-bold text-luxury-text">v1.0.0 - 首次正式发版</span>
+                              <span className="text-xl font-bold text-luxury-text">v1.1.0 - 交互体验大升级</span>
                               <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.23</span>
                             </div>
                             <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>奢华社刊设计</b>：全系统应用衬线体排版与暖米白质感 UI。</span>
+                                <span><b>词组智能识别</b>：支持 Phrase 级连贯划线与整体 Fisheye 缩放。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>智能阅读引擎</b>：支持“鱼眼”缩放交互与单词卡片展示。</span>
+                                <span><b>物理呼吸交互</b>：单词放大时自动推开邻近文字，排版稳如磐石。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>双向联动编辑器</b>：段落录入与词汇标注实时感知高亮。</span>
+                                <span><b>五色视觉标记</b>：支持自定义重点词汇颜色，全链路视觉联动。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>全局单词本</b>：支持跨文章搜索与快速溯源索引。</span>
+                                <span><b>编辑器增强</b>：引入段落配图即时预览，支持多例句实时管理。</span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* v1.0.0 */}
+                        <div className="relative opacity-60">
+                          <div className="absolute -left-[35px] top-1.5 w-3 h-3 bg-luxury-text/20 border-2 border-luxury-bg rounded-full" />
+                          <div className="space-y-4">
+                            <div className="flex flex-col">
+                              <span className="text-xl font-bold text-luxury-text">v1.0.0 - 首次正式发版</span>
+                              <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.20</span>
+                            </div>
+                            <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>奢华社刊设计</b>：全系统衬线体排版与暖米白 UI。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>本地持久化</b>：基于 IndexedDB 的海量文章与图片存储。</span>
+                                <span><b>智能阅读引擎</b>：支持鱼眼缩放交互与词卡展示。</span>
                               </li>
                             </ul>
                           </div>

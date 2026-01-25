@@ -30,37 +30,13 @@
   opacity: 0.03;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3column%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
-
-/* 纵向编辑网格线 */
-.grid-lines {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 40;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  padding: 0 4rem;
-}
-
-.grid-line {
-  border-left: 1px solid rgba(26, 26, 26, 0.1);
-  height: 100%;
-}
-
-.grid-line:last-child {
-  border-right: 1px solid rgba(26, 26, 26, 0.1);
-}
-
-/* 重新设计马克笔效果 */
+/* 重新设计马克笔效果 - 更加精致的下划线感 */
 .marker-highlight {
-  background: linear-gradient(to bottom, transparent 60%, rgba(212, 175, 55, 0.3) 60%);
-  transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background: linear-gradient(to bottom, transparent 50%, rgba(212, 175, 55, 0.3) 50%);
+  transition: opacity 0.5s ease;
 }
 
-.marker-highlight:hover {
-  background: rgba(212, 175, 55, 0.5);
-  color: #000;
-}
+/* 移除 Hover 时变厚的逻辑，保持划线精致 */
 
 /* 自定义滚动条 - 极致简约 */
 .custom-scrollbar::-webkit-scrollbar {

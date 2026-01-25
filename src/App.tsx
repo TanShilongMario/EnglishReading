@@ -84,15 +84,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-luxury-bg font-sans text-luxury-text selection:bg-luxury-gold/30 overflow-hidden relative">
-      {/* 装饰性元素 */}
       <div className="paper-texture" />
-      <div className="grid-lines">
-        <div className="grid-line" />
-        <div className="grid-line" />
-        <div className="grid-line" />
-        <div className="grid-line" />
-      </div>
-
       {/* 顶部导航 - 极致社刊感 */}
       <nav className="fixed top-0 left-0 right-0 h-20 bg-luxury-bg/80 backdrop-blur-md border-b border-luxury-text/10 flex items-center justify-between px-16 z-[60]">
         <div 

@@ -25,6 +25,7 @@ export interface Vocabulary {
   definition: string;
   translation: string;
   examples: string[];
+  color?: string; // 新增：自定义高亮颜色
 }
 
 export class AppDatabase extends Dexie {

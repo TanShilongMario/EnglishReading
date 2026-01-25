@@ -111,21 +111,27 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.9 }}
-                    className="group border border-luxury-text/10 p-8 bg-luxury-bg hover:border-luxury-gold transition-all duration-700 relative"
+                    className="group border border-luxury-text/10 p-8 bg-luxury-bg transition-all duration-700 relative"
+                    style={{ 
+                      borderColor: vocab.color ? `${vocab.color}20` : undefined,
+                      borderLeftWidth: '4px',
+                      borderLeftColor: vocab.color || '#E2B933'
+                    }}
                   >
                     <div className="flex justify-between items-start mb-4">
                       <div className="space-y-1">
-                        <h3 className="text-3xl font-serif leading-none">{vocab.word}</h3>
+                        <h3 className="text-3xl font-serif leading-none" style={{ color: vocab.color || '#E2B933' }}>{vocab.word}</h3>
                         <div className="flex items-center gap-3 text-sm font-serif italic">
                           <span className="text-luxury-muted/60">{vocab.partOfSpeech}</span>
-                          <p className="text-luxury-gold">{vocab.phonetic}</p>
+                          <p style={{ color: vocab.color || '#E2B933' }}>{vocab.phonetic}</p>
                         </div>
                       </div>
                       
                       <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId)}
-                          className="p-2 text-luxury-muted hover:text-luxury-gold transition-colors"
+                          className="p-2 text-luxury-muted hover:opacity-70 transition-colors"
+                          style={{ color: vocab.color || '#E2B933' }}
                           title="快速索引至文章"
                         >
                           <ArrowUpRight size={18} />
@@ -140,13 +146,14 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                     </div>
 
                     <div className="space-y-4">
-                      <p className="text-sm text-luxury-text font-bold">{vocab.translation}</p>
+                      <p className="text-sm font-bold" style={{ color: vocab.color || '#E2B933' }}>{vocab.translation}</p>
                       <p className="text-sm text-luxury-muted italic line-clamp-2">{vocab.definition}</p>
                     </div>
 
                     {/* 快速索引装饰 */}
                     <div 
-                      className="absolute bottom-4 right-4 flex items-center gap-2 text-[9px] uppercase tracking-widest text-luxury-gold font-bold opacity-0 group-hover:opacity-100 cursor-pointer transition-all translate-x-4 group-hover:translate-x-0"
+                      className="absolute bottom-4 right-4 flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold opacity-0 group-hover:opacity-100 cursor-pointer transition-all translate-x-4 group-hover:translate-x-0"
+                      style={{ color: vocab.color || '#E2B933' }}
                       onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId)}
                     >
                       Quick Index <ChevronRight size={10} />

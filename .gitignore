@@ -26,6 +26,7 @@ dist-ssr
 # Project specific ignores
 PRD.md
 ARCHITECTURE.md
+release_checklist.md
 
 # Vite
 .vite
