@@ -74,16 +74,16 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                             <span className="text-luxury-gold">02.</span> 沉浸讲解 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Exhibition</span>
                           </h4>
                           <p className="text-sm text-luxury-muted leading-relaxed pl-10 border-l border-luxury-text/5 group-hover:border-luxury-gold/30 transition-colors">
-                            进入展示模式，享受丝滑的“鱼眼”缩放交互。点击带标记的单词即可唤起精美的释义卡片，标点符号排版已针对放大效果深度优化。
+                            进入展示模式，享受丝滑的“鱼眼”缩放交互。您可以自由切换四种预设字体（Classic/Book/Clean/Design）以匹配不同的文章调性，标点符号排版已针对放大效果深度优化。
                           </p>
                         </div>
 
                         <div className="group space-y-3">
                           <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-3 text-luxury-text">
-                            <span className="text-luxury-gold">03.</span> 知识沉淀 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Lexicon</span>
+                            <span className="text-luxury-gold">03.</span> 数据安全 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Backup</span>
                           </h4>
                           <p className="text-sm text-luxury-muted leading-relaxed pl-10 border-l border-luxury-text/5 group-hover:border-luxury-gold/30 transition-colors">
-                            通过单词本全局检索所有课程的重点词汇。利用“Quick Index”功能，您可以从单词本一键跳转回文章的上下文语境。
+                            利用“导入/导出”功能，您可以将课程打包为单一文件进行备份或异地传输。系统具备智能重名检测，导入时可选择覆盖或保留副本。
                           </p>
                         </div>
                       </div>
@@ -95,6 +95,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                         <h3 className="text-sm uppercase tracking-widest font-bold">进阶技巧</h3>
                       </div>
                       <ul className="text-sm text-luxury-muted space-y-4">
+                        <li className="flex gap-3">
+                          <span className="text-luxury-gold">✦</span>
+                          <span>所有数据实时自动保存，编辑词条后直接切换到展示模式即可看到最新效果。</span>
+                        </li>
                         <li className="flex gap-3">
                           <span className="text-luxury-gold">✦</span>
                           <span>利用匹配模式（Match Variations）关联单词的复数、过去式等变形。</span>
@@ -128,7 +132,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                           <div className="space-y-4">
                             <div className="flex flex-col">
                               <span className="text-xl font-bold text-luxury-text">v1.1.0 - 交互体验大升级</span>
-                              <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.23</span>
+                              <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.27</span>
                             </div>
                             <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
                               <li className="flex gap-2">
@@ -137,19 +141,27 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
+                                <span><b>个性化字体方案</b>：展示模式新增四种经典排版字体切换，适配不同审美需求。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
                                 <span><b>词组智能识别</b>：支持 Phrase 级连贯划线与整体 Fisheye 缩放。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>物理呼吸交互</b>：单词放大时自动推开邻近文字，排版稳如磐石。</span>
+                                <span><b>物理呼吸交互</b>：单词放大时自动推开邻近文字，解决文字堆叠，排布更显从容。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>五色视觉标记</b>：支持自定义重点词汇颜色，全链路视觉联动。</span>
+                                <span><b>五色视觉标记</b>：支持自定义重点词汇颜色，实现划线、文字、词卡的全局联动。</span>
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>编辑器增强</b>：支持实时自动保存词条更改，引入段落配图即时预览。</span>
+                                <span><b>编辑器增强</b>：支持词条修改实时自动保存，引入段落配图即时预览。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>视觉排版优化</b>：主页卡片去繁就简，阅读器采用对称缓冲区布局，严丝合缝。</span>
                               </li>
                             </ul>
                           </div>

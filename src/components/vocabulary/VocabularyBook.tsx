@@ -4,7 +4,7 @@ import { BookOpen, Search, ArrowUpRight, Trash2, ChevronRight } from 'lucide-rea
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface VocabularyBookProps {
-  onNavigateToArticle: (projectId: number, paragraphId: number) => void;
+  onNavigateToArticle: (projectId: number, paragraphId: number, vocabId?: number) => void;
 }
 
 export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArticle }) => {
@@ -129,7 +129,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                       
                       <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
-                          onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId)}
+                          onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId, vocab.id)}
                           className="p-2 text-luxury-muted hover:opacity-70 transition-colors"
                           style={{ color: vocab.color || '#E2B933' }}
                           title="快速索引至文章"
@@ -154,7 +154,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                     <div 
                       className="absolute bottom-4 right-4 flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold opacity-0 group-hover:opacity-100 cursor-pointer transition-all translate-x-4 group-hover:translate-x-0"
                       style={{ color: vocab.color || '#E2B933' }}
-                      onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId)}
+                      onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId, vocab.id)}
                     >
                       Quick Index <ChevronRight size={10} />
                     </div>

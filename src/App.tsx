@@ -7,7 +7,7 @@ import { InstructionsModal } from './components/common/InstructionsModal';
 import { ChevronLeft, ChevronRight, BookOpen, Layout, Plus, Trash2, Home, Presentation, Book, HelpCircle, Download, Upload, CheckSquare, Square, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useProjectStore } from './store/useProjectStore';
 import { db, Vocabulary, migrateDatabase, Project } from './api/db';
-import { projectService } from './services';
+import { projectService, vocabularyService } from './services';
 import { ImportExportService, ExportData } from './services/ImportExportService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
@@ -640,13 +640,24 @@ function App() {
 
         {mode === 'vocab' && (
           <VocabularyBook
-            onNavigateToArticle={async (projectId, paraId) => {
+            onNavigateToArticle={async (projectId, paraId, vocabId) => {
               await loadProject(projectId);
               // 使用 Service 获取最新的段落列表
               const paras = await projectService.getParagraphs(projectId);
               const paraIndex = paras.findIndex(p => p.id === paraId);
               setPageIndex(paraIndex >= 0 ? paraIndex : 0);
               setMode('present');
+              
+              // 如果有 vocabId，在下一轮渲染中触发词条展示
+              if (vocabId) {
+                setTimeout(async () => {
+                  const vocabs = await vocabularyService.getSmartVocabulary(paraId);
+                  const targetVocab = vocabs.find(v => v.id === vocabId);
+                  if (targetVocab) {
+                    setActiveWord(targetVocab);
+                  }
+                }, 100);
+              }
             }}
           />
         )}
