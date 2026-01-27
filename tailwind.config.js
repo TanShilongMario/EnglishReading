@@ -14,8 +14,12 @@ export default {
         'luxury-gold': '#E2B933',    // 金属金
       },
       fontFamily: {
-        'serif': ['"Playfair Display"', 'STSong', '"Songti SC"', 'SimSun', 'serif'],
-        'sans': ['Inter', 'system-ui', 'sans-serif'],
+        'serif-classic': ['"Playfair Display"', 'serif'],
+        'serif-modern': ['Lora', 'serif'],
+        'sans-modern': ['Inter', 'sans-serif'],
+        'sans-elegant': ['Montserrat', 'sans-serif'],
+        'serif': ['"Playfair Display"', 'serif'],
+        'sans': ['Inter', 'sans-serif'],
       },
       letterSpacing: {
         'editorial': '0.25em',

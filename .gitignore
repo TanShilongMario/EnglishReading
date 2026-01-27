@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+Dev_MD
 
 # Editor folders and files
 .vscode/*
@@ -27,6 +28,7 @@ dist-ssr
 PRD.md
 ARCHITECTURE.md
 release_checklist.md
+CLAUDE.md
 
 # Vite
 .vite

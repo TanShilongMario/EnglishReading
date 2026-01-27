@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { FisheyeWord } from './FisheyeWord';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Vocabulary } from '../../api/db';
-import { X, Maximize2 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -10,44 +9,12 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface ImageZoomProps {
-  src: string;
-  onClose: () => void;
-}
-
-const ImageZoom: React.FC<ImageZoomProps> = ({ src, onClose }) => (
-  <motion.div 
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-luxury-bg/90 backdrop-blur-xl p-8 md:p-20"
-    onClick={onClose}
-  >
-    <button 
-      onClick={onClose}
-      className="absolute top-8 right-8 p-3 bg-luxury-text text-luxury-bg rounded-full hover:scale-110 transition-transform z-[110]"
-    >
-      <X size={24} />
-    </button>
-    <motion.img 
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
-      src={src} 
-      alt="Zoomed" 
-      className="max-w-full max-h-full object-contain shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    />
-  </motion.div>
-);
-
 interface ReaderEngineProps {
   content: string;
   imageUrl?: string;
   imageData?: Blob;
   highlightedWords: Vocabulary[]; // 改为传递完整的词汇对象
   onWordClick?: (word: string) => void;
-  fontClass?: string; // 新增：自定义字体类名
 }
 
 export const ReaderEngine: React.FC<ReaderEngineProps> = ({ 
@@ -55,13 +22,11 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
   imageUrl,
   imageData,
   highlightedWords,
-  onWordClick,
-  fontClass = 'font-serif'
+  onWordClick 
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredVocabId, setHoveredVocabId] = useState<number | null>(null);
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   React.useEffect(() => {
     if (imageData) {
@@ -109,7 +74,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
 
   // 计算每个 segment 对应的词汇映射，支持词组
   const segmentVocabMap = React.useMemo(() => {
-    const map: Record<number, Vocabulary & { isGlobal?: boolean }> = {};
+    const map: Record<number, Vocabulary> = {};
     if (highlightedWords.length === 0) return map;
 
     // 按长度降序排列，优先匹配长词组
@@ -190,10 +155,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               isPhraseHovered && "z-20 relative"
             )}
             style={{
-              // 全局共享词使用更浅的颜色或虚线效果
-              backgroundImage: vocab.isGlobal 
-                ? `linear-gradient(to bottom, transparent 70%, ${(vocab.color || '#E2B933')}4D 70%)`
-                : `linear-gradient(to bottom, transparent 50%, ${(vocab.color || '#E2B933')}66 50%)`
+              backgroundImage: `linear-gradient(to bottom, transparent 50%, ${(vocab.color || '#E2B933')}4D 50%)`
             }}
             onMouseEnter={() => setHoveredVocabId(vocab.id!)}
             onMouseLeave={() => setHoveredVocabId(null)}
@@ -204,22 +166,21 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
                 return (
                   <motion.span 
                     key={item.index} 
-                    className={item.content?.includes('\n') ? "inline" : "inline-block"}
-                    animate={item.content?.includes('\n') ? {} : { 
-                      // 显著增加空格放大倍数，避免长词组内部挤占
-                      width: isPhraseHovered ? '1.2em' : '0.35em',
-                      scale: isPhraseHovered ? 1.5 : 1 
+                    className="inline-block"
+                    animate={{ 
+                      width: isPhraseHovered ? '0.8em' : '0.35em',
+                      scale: isPhraseHovered ? 1.3 : 1 
                     }}
                     transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                   >
-                    {item.content || '\u00A0'}
+                    &nbsp;
                   </motion.span>
                 );
               }
 
               if (item.type === 'punct') {
                 return (
-                  <span key={item.index} className={cn("inline text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
+                  <span key={item.index} className="inline text-[22px] text-luxury-muted opacity-40 px-0.5 font-serif italic">
                     {item.content}
                   </span>
                 );
@@ -233,10 +194,9 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
                   word={wordToMatch}
                   hoveredIndex={null}
                   isHovered={isPhraseHovered}
-                  isHighlighted={true}
+                  isHighlighted={false}
                   color={vocab.color}
                   hideMargin={true}
-                  fontClass={fontClass}
                 />
               );
             })}
@@ -262,24 +222,22 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
 
           const isNeighborScaling = isPrevScaling || isNextScaling;
 
-          const hasNewline = group.content?.includes('\n');
           elements.push(
             <motion.span 
               key={group.index} 
-              className={hasNewline ? "inline" : "inline-block"}
-              animate={hasNewline ? {} : { 
-                // 邻居空格也显著变宽，配合缓冲区实现完美鱼眼
-                width: isNeighborScaling ? '1.2em' : '0.35em',
-                scale: isNeighborScaling ? 1.5 : 1
+              className="inline-block"
+              animate={{ 
+                width: isNeighborScaling ? '1em' : '0.35em',
+                scale: isNeighborScaling ? 1.2 : 1
               }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             >
-              {group.content || '\u00A0'}
+              &nbsp;
             </motion.span>
           );
         } else if (group.type === 'punct') {
           elements.push(
-            <span key={group.index} className={cn("text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
+            <span key={group.index} className="text-[22px] text-luxury-muted opacity-40 px-0.5 font-serif italic">
               {group.content}
             </span>
           );
@@ -291,15 +249,16 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               index={group.index}
               word={wordToMatch}
               hoveredIndex={hoveredIndex}
-              isHighlighted={false}
-              fontClass={fontClass}
+              isHighlighted={!!vocab}
+              color={vocab?.color}
               onMouseEnter={() => setHoveredIndex(group.index)}
               onMouseLeave={() => setHoveredIndex(null)}
+              onClick={() => vocab && onWordClick?.(vocab.word)}
             />
           );
           if (group.type === 'word-with-punct') {
             elements.push(
-              <span key={`punct-${group.index}`} className={cn("text-[22px] text-luxury-muted opacity-40 italic pr-1", fontClass)}>
+              <span key={`punct-${group.index}`} className="text-[22px] text-luxury-muted opacity-40 font-serif italic pr-1">
                 {group.punct}
               </span>
             );
@@ -308,7 +267,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
       }
     }
     return elements;
-  }, [groups, segmentVocabMap, hoveredVocabId, hoveredIndex, onWordClick, fontClass]);
+  }, [groups, segmentVocabMap, hoveredVocabId, hoveredIndex, onWordClick]);
 
   return (
     <div className="flex flex-col w-full max-w-[1600px] mx-auto h-full overflow-hidden px-16 relative">
@@ -320,19 +279,13 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-              className="w-full h-full relative group overflow-hidden border border-luxury-text/5 cursor-zoom-in"
-              onClick={() => setIsImageZoomed(true)}
+              className="w-full h-full relative group overflow-hidden border border-luxury-text/5"
             >
               <img 
                 src={displayImage} 
                 alt="Editorial" 
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transition-all duration-[2000ms] ease-out" 
               />
-              <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-4">
-                <div className="bg-luxury-bg/90 p-2 shadow-sm border border-luxury-text/10">
-                  <Maximize2 size={14} className="text-luxury-text/60" />
-                </div>
-              </div>
             </motion.div>
           ) : (
             /* 无图片时的占位占位符，或者保持空白高度 */
@@ -340,21 +293,9 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
           )}
         </div>
 
-        {/* 图片放大模态框 */}
-        <AnimatePresence>
-          {isImageZoomed && displayImage && (
-            <ImageZoom src={displayImage} onClose={() => setIsImageZoomed(false)} />
-          )}
-        </AnimatePresence>
-
-        {/* 文章内容 - 采用对称溢出缓冲区方案，确保与图片对齐 */}
+        {/* 文章内容 - 参考编辑模式样式 */}
         <div className="max-w-4xl mx-auto w-full overflow-visible">
-          {/* 
-            -mx-64 (左右各拉伸 256px 缓冲区)
-            px-64 (左右各内缩 256px，使文字内容回到 max-w-4xl 边界内)
-            这样文字基准线与图片完全对齐，但鱼眼放大时可以向外溢出而不被裁剪
-          */}
-          <div className={cn("block leading-relaxed -mx-64 px-64 whitespace-pre-wrap text-justify", fontClass)}>
+          <div className="block leading-relaxed -mr-24 pr-24">
             {renderedContent}
           </div>
         </div>

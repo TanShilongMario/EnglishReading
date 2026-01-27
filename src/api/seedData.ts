@@ -1,17 +1,30 @@
 import { Project, Paragraph, Vocabulary } from './db';
 
+const HIGHLIGHT_COLORS = [
+  '#E2B933', // Luxury Gold
+  '#C0392B', // Deep Red
+  '#2980B9', // Belize Blue
+  '#27AE60', // Nephritis Green
+  '#8E44AD'  // Wisteria Purple
+];
+
+const getRandomColor = () => HIGHLIGHT_COLORS[Math.floor(Math.random() * HIGHLIGHT_COLORS.length)];
+
 export const SAMPLE_PROJECT: {
   project: Omit<Project, 'id'>;
   paragraphs: (Omit<Paragraph, 'id' | 'projectId'> & { vocabulary: Omit<Vocabulary, 'id' | 'paragraphId'>[] })[];
 } = {
   project: {
     title: "How to Articulate Yourself Intelligently (Sample)",
+    coverImage: "https://s3.bmp.ovh/2026/01/27/XAruPv4g.png",
+    isSample: true,
     createdAt: Date.now()
   },
   paragraphs: [
     {
       content: "When I was young, I was always drawn to people who sounded intelligent. People like Alan Watts or Jordan Peterson who could explain deep ideas in an interesting way. Most of the time, I didn’t understand what they were saying, but since it sounded smart and articulate, I listened anyway and gave them my respect.",
       order: 0,
+      image: "https://s3.bmp.ovh/2026/01/27/l3csYi7H.png",
       vocabulary: [
         {
           word: "articulate",
@@ -20,7 +33,8 @@ export const SAMPLE_PROJECT: {
           definition: "To express ideas clearly and effectively.",
           translation: "清楚地表达",
           matchPattern: "articulated, articulates, articulating",
-          examples: ["She is an articulate speaker who can convince anyone."]
+          examples: ["She is an articulate speaker who can convince anyone."],
+          color: HIGHLIGHT_COLORS[0]
         },
         {
           word: "intelligent",
@@ -28,7 +42,9 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "adj.",
           definition: "Showing symbols of high mental capacity.",
           translation: "聪明的，有才智的",
-          examples: ["It was an intelligent solution to a complex problem."]
+          image: "https://s3.bmp.ovh/2026/01/27/EnAvN9YH.png",
+          examples: ["It was an intelligent solution to a complex problem."],
+          color: HIGHLIGHT_COLORS[1]
         },
         {
           word: "drawn to",
@@ -36,7 +52,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "To be attracted to something or someone.",
           translation: "被...吸引",
-          examples: ["Many young artists are drawn to the vibrant city life."]
+          examples: ["Many young artists are drawn to the vibrant city life."],
+          color: HIGHLIGHT_COLORS[2]
         }
       ]
     },
@@ -50,7 +67,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "The maximum amount that something can contain or produce.",
           translation: "容量，能力",
-          examples: ["The stadium has a seating capacity of 50,000."]
+          examples: ["The stadium has a seating capacity of 50,000."],
+          color: HIGHLIGHT_COLORS[3]
         },
         {
           word: "coherent",
@@ -58,7 +76,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "adj.",
           definition: "Logical and consistent.",
           translation: "连贯的，条理清晰的",
-          examples: ["He failed to provide a coherent explanation for his absence."]
+          examples: ["He failed to provide a coherent explanation for his absence."],
+          color: HIGHLIGHT_COLORS[4]
         },
         {
           word: "string together",
@@ -66,7 +85,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "To combine things into a connected whole.",
           translation: "串联，拼凑",
-          examples: ["She managed to string together a few sentences in French."]
+          examples: ["She managed to string together a few sentences in French."],
+          color: HIGHLIGHT_COLORS[0]
         }
       ]
     },
@@ -80,7 +100,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "adj.",
           definition: "Described as a particular thing by oneself.",
           translation: "自封的",
-          examples: ["The self-proclaimed expert had little actual experience."]
+          examples: ["The self-proclaimed expert had little actual experience."],
+          color: HIGHLIGHT_COLORS[1]
         },
         {
           word: "impactful",
@@ -88,7 +109,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "adj.",
           definition: "Having a major impact or effect.",
           translation: "有影响力的",
-          examples: ["The speech was deeply impactful and moved the audience to tears."]
+          examples: ["The speech was deeply impactful and moved the audience to tears."],
+          color: HIGHLIGHT_COLORS[2]
         }
       ]
     },
@@ -102,7 +124,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A collection of personal core ideas.",
           translation: "内在专辑（核心观点集）",
-          examples: ["Every great speaker has an inner album of concepts they know by heart."]
+          examples: ["Every great speaker has an inner album of concepts they know by heart."],
+          color: HIGHLIGHT_COLORS[3]
         },
         {
           word: "greatest hits",
@@ -110,7 +133,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "The most successful or popular examples of someone's work.",
           translation: "最成功的作品（成名曲）",
-          examples: ["The author decided to revisit his greatest hits in the new collection."]
+          examples: ["The author decided to revisit his greatest hits in the new collection."],
+          color: HIGHLIGHT_COLORS[4]
         }
       ]
     },
@@ -124,7 +148,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "An obstacle or difficulty to be overcome.",
           translation: "障碍，门槛",
-          examples: ["The first hurdle is always the hardest to get over."]
+          examples: ["The first hurdle is always the hardest to get over."],
+          color: HIGHLIGHT_COLORS[0]
         },
         {
           word: "refine",
@@ -133,7 +158,8 @@ export const SAMPLE_PROJECT: {
           definition: "To improve something by making small changes.",
           translation: "完善，提炼",
           matchPattern: "refined, refines, refining",
-          examples: ["The architect continued to refine the design until it was perfect."]
+          examples: ["The architect continued to refine the design until it was perfect."],
+          color: HIGHLIGHT_COLORS[1]
         }
       ]
     },
@@ -148,7 +174,8 @@ export const SAMPLE_PROJECT: {
           definition: "A basic structure underlying a system or concept.",
           translation: "框架，构架",
           matchPattern: "frameworks",
-          examples: ["The government is establishing a framework for economic growth."]
+          examples: ["The government is establishing a framework for economic growth."],
+          color: HIGHLIGHT_COLORS[2]
         },
         {
           word: "blow past",
@@ -156,7 +183,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "To move past someone or something very quickly.",
           translation: "迅速超越",
-          examples: ["Technology is blowing past our traditional laws and regulations."]
+          examples: ["Technology is blowing past our traditional laws and regulations."],
+          color: HIGHLIGHT_COLORS[3]
         }
       ]
     },
@@ -170,7 +198,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A thorough or dramatic change in form or appearance.",
           translation: "转变，转化",
-          examples: ["The landscape underwent a radical transformation."]
+          examples: ["The landscape underwent a radical transformation."],
+          color: HIGHLIGHT_COLORS[4]
         },
         {
           word: "relatable",
@@ -178,7 +207,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "adj.",
           definition: "Enabling a person to feel that they can relate to someone or something.",
           translation: "能引起共鸣的",
-          examples: ["She writes about relatable situations that everyone experiences."]
+          examples: ["She writes about relatable situations that everyone experiences."],
+          color: HIGHLIGHT_COLORS[0]
         },
         {
           word: "amplify",
@@ -186,7 +216,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "v.",
           definition: "To make something more intense or far-reaching.",
           translation: "放大，增强",
-          examples: ["We need to amplify the voices of the marginalized."]
+          examples: ["We need to amplify the voices of the marginalized."],
+          color: HIGHLIGHT_COLORS[1]
         }
       ]
     },
@@ -200,7 +231,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "A complex or time-consuming situation or topic.",
           translation: "钻研，深挖",
-          examples: ["I went down a rabbit hole researching my family history."]
+          examples: ["I went down a rabbit hole researching my family history."],
+          color: HIGHLIGHT_COLORS[2]
         },
         {
           word: "insight",
@@ -208,7 +240,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A deep understanding of a person or thing.",
           translation: "洞察力，见解",
-          examples: ["The study offers new insights into how children learn languages."]
+          examples: ["The study offers new insights into how children learn languages."],
+          color: HIGHLIGHT_COLORS[3]
         },
         {
           word: "jot down",
@@ -216,7 +249,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "v.",
           definition: "To write something quickly.",
           translation: "草草记下",
-          examples: ["Wait a minute, let me jot down your phone number."]
+          examples: ["Wait a minute, let me jot down your phone number."],
+          color: HIGHLIGHT_COLORS[4]
         }
       ]
     },
@@ -230,7 +264,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A structure with a square base and four sloping triangular sides.",
           translation: "金字塔",
-          examples: ["The ancient pyramids of Egypt are wonders of the world."]
+          examples: ["The ancient pyramids of Egypt are wonders of the world."],
+          color: HIGHLIGHT_COLORS[0]
         },
         {
           word: "evidence",
@@ -238,7 +273,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "Facts or information indicating whether a belief is true.",
           translation: "证据，证明",
-          examples: ["There is no evidence to suggest that he was involved in the crime."]
+          examples: ["There is no evidence to suggest that he was involved in the crime."],
+          color: HIGHLIGHT_COLORS[1]
         }
       ]
     },
@@ -252,7 +288,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "The combination of components or elements to form a connected whole.",
           translation: "综合，合成",
-          examples: ["Her work is a synthesis of many different artistic styles."]
+          examples: ["Her work is a synthesis of many different artistic styles."],
+          color: HIGHLIGHT_COLORS[2]
         },
         {
           word: "entropy",
@@ -260,7 +297,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A thermodynamic quantity representing the unavailability of a system's thermal energy.",
           translation: "熵（此处指无序状态）",
-          examples: ["In a closed system, entropy always increases over time."]
+          examples: ["In a closed system, entropy always increases over time."],
+          color: HIGHLIGHT_COLORS[3]
         }
       ]
     },
@@ -274,7 +312,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "v.",
           definition: "Produce an idea or way of solving a problem by rapid thinking.",
           translation: "集思广益，头脑风暴",
-          examples: ["The team spent the afternoon brainstorming new product ideas."]
+          examples: ["The team spent the afternoon brainstorming new product ideas."],
+          color: HIGHLIGHT_COLORS[4]
         },
         {
           word: "metaphor",
@@ -282,7 +321,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "n.",
           definition: "A figure of speech in which a word or phrase is applied to an object or action.",
           translation: "隐喻，比喻",
-          examples: ["'Life is a journey' is a common metaphor."]
+          examples: ["'Life is a journey' is a common metaphor."],
+          color: HIGHLIGHT_COLORS[0]
         }
       ]
     },
@@ -296,7 +336,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "phrase",
           definition: "To learn how to do or use something.",
           translation: "掌握窍门",
-          examples: ["It took me a while to get the hang of using the new software."]
+          examples: ["It took me a while to get the hang of using the new software."],
+          color: HIGHLIGHT_COLORS[1]
         },
         {
           word: "rewire",
@@ -304,7 +345,8 @@ export const SAMPLE_PROJECT: {
           partOfSpeech: "v.",
           definition: "To change the way a system or a brain works.",
           translation: "重构，重新连接",
-          examples: ["Learning a new language can help rewire your brain."]
+          examples: ["Learning a new language can help rewire your brain."],
+          color: HIGHLIGHT_COLORS[2]
         }
       ]
     }

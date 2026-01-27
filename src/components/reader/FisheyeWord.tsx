@@ -15,6 +15,7 @@ interface FisheyeWordProps {
   isHighlighted?: boolean;
   color?: string; // 新增：自定义高亮颜色
   hideMargin?: boolean;
+  fontClass?: string; // 新增：字体类名
   onClick?: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
@@ -28,6 +29,7 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
   isHighlighted, 
   color: highlightColor = '#E2B933',
   hideMargin = false,
+  fontClass,
   onClick,
   onMouseEnter,
   onMouseLeave,
@@ -47,11 +49,10 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
       onMouseLeave={onMouseLeave}
       initial={false}
       animate={{ 
-        // 缩放效果移至内部文字节点，保持外层背景（划线）尺寸稳定
-        marginLeft: hideMargin ? 0 : (isHovered && shouldScale ? 20 : 4),
-        marginRight: hideMargin ? 0 : (isHovered && shouldScale ? 20 : 4),
-        // 统一 Hover 时的颜色变化，提升交互感
-        color: isHovered ? highlightColor : '#1A1A1A'
+        // 进一步增加挤开空间，给放大后的文字留出足够视觉间隙
+        marginLeft: hideMargin ? 0 : (isHovered && shouldScale ? 16 : 4),
+        marginRight: hideMargin ? 0 : (isHovered && shouldScale ? 16 : 4),
+        color: isHovered ? highlightColor : 'inherit'
       }}
       transition={{ 
         type: 'spring', damping: 25, stiffness: 200,
@@ -59,13 +60,14 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
       }}
       className={cn(
         "cursor-pointer inline-block origin-center select-none relative px-1",
-        "text-[22px] font-serif leading-relaxed transition-colors duration-500",
+        "text-[22px] leading-relaxed transition-colors duration-500",
+        fontClass, // 显式应用传入的字体
         isHighlighted && "font-bold",
-        isHovered && "z-30",
+        isHovered && "z-50",
       )}
       style={{
-        // 如果高亮，应用自定义颜色的下划线（马克笔效果）
-        backgroundImage: isHighlighted ? `linear-gradient(to bottom, transparent 50%, ${highlightColor}4D 50%)` : 'none',
+        // 移除内部背景，改由 ReaderEngine 统一管理，防止颜色重叠
+        // backgroundImage: isHighlighted ? `linear-gradient(to bottom, transparent 50%, ${highlightColor}4D 50%)` : 'none',
       }}
     >
       <motion.span

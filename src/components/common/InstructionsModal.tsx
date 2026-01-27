@@ -133,6 +133,10 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                             <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
+                                <span><b>文章导入导出</b>：支持 `.json` 格式一键备份与异地读取，带冲突检测逻辑。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
                                 <span><b>词组智能识别</b>：支持 Phrase 级连贯划线与整体 Fisheye 缩放。</span>
                               </li>
                               <li className="flex gap-2">
@@ -145,7 +149,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                               </li>
                               <li className="flex gap-2">
                                 <span className="text-luxury-gold">•</span>
-                                <span><b>编辑器增强</b>：引入段落配图即时预览，支持多例句实时管理。</span>
+                                <span><b>编辑器增强</b>：支持实时自动保存词条更改，引入段落配图即时预览。</span>
                               </li>
                             </ul>
                           </div>

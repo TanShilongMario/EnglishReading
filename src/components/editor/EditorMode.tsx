@@ -10,7 +10,12 @@ function cn(...inputs: ClassValue[]) {
 }
 
 // 辅助函数：在编辑器中渲染带高亮的文本
-const HighlightedText: React.FC<{ text: string; vocab: Vocabulary[]; isActive: boolean }> = ({ text, vocab, isActive }) => {
+const HighlightedText: React.FC<{ 
+  text: string; 
+  vocab: Vocabulary[]; 
+  isActive: boolean;
+  onVocabClick?: (vocab: Vocabulary) => void;
+}> = ({ text, vocab, isActive, onVocabClick }) => {
   const segments = useMemo(() => {
     if (!text) return [];
     // 使用与 ReaderEngine 类似的分词逻辑
@@ -66,7 +71,7 @@ const HighlightedText: React.FC<{ text: string; vocab: Vocabulary[]; isActive: b
   }, [segments, vocab]);
 
   return (
-    <div className="w-full min-h-40 text-xl font-serif leading-relaxed whitespace-pre-wrap break-words pointer-events-none">
+    <div className="w-full min-h-40 text-xl font-serif leading-relaxed whitespace-pre-wrap break-words relative">
       {segments.map((segment, index) => {
         const vocabEntry = segmentVocabMap[index];
 
@@ -75,17 +80,21 @@ const HighlightedText: React.FC<{ text: string; vocab: Vocabulary[]; isActive: b
           return (
             <span 
               key={index} 
-              className="font-medium"
+              className="font-medium cursor-pointer pointer-events-auto relative z-20"
               style={{ 
                 backgroundColor: `${highlightColor}33`, // 20% opacity
                 borderBottom: `4px solid ${highlightColor}80` // 50% opacity, thicker for better visibility
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onVocabClick?.(vocabEntry);
               }}
             >
               {segment}
             </span>
           );
         }
-        return <span key={index} className="text-luxury-text/80">{segment}</span>;
+        return <span key={index} className="text-luxury-text/80 pointer-events-none">{segment}</span>;
       })}
     </div>
   );
@@ -101,12 +110,14 @@ export const EditorMode: React.FC = () => {
     deleteParagraph,
     getVocabForParagraph,
     saveVocab,
-    deleteVocab
+    deleteVocab,
+    excludeWord,
+    includeWord
   } = useProjectStore();
 
   const [activeParaId, setActiveParaId] = useState<number | null>(null);
-  const [paraVocab, setParaVocab] = useState<Vocabulary[]>([]);
-  const [allVocab, setAllVocab] = useState<Record<number, Vocabulary[]>>({}); // 存储所有段落的词汇
+  const [paraVocab, setParaVocab] = useState<(Vocabulary & { isGlobal?: boolean })[]>([]);
+  const [allVocab, setAllVocab] = useState<Record<number, (Vocabulary & { isGlobal?: boolean })[]>>({}); // 存储所有段落的词汇
   const [editingVocab, setEditingVocab] = useState<Partial<Vocabulary>>({
     word: '', phonetic: '', definition: '', translation: '', examples: [''], color: '#E2B933'
   });
@@ -148,6 +159,28 @@ export const EditorMode: React.FC = () => {
     }
   };
 
+  // 项目封面图 objectUrl 管理
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (currentProject?.coverImageData) {
+      const url = URL.createObjectURL(currentProject.coverImageData);
+      setCoverImageUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else if (currentProject?.coverImage) {
+      setCoverImageUrl(currentProject.coverImage);
+    } else {
+      setCoverImageUrl(null);
+    }
+  }, [currentProject?.coverImageData, currentProject?.coverImage, currentProject?.id]);
+
+  const handleUpdateCover = async (data: { coverImage?: string; coverImageData?: Blob }) => {
+    if (!currentProject?.id) return;
+    // 这里需要扩展 saveProject 以支持封面更新，或者直接在 store 中添加 updateProjectCover
+    // 为了保持一致性，我们假设 saveProject 可以处理更多参数，或者通过 updateParagraph 的模式
+    // 但 Store 目前只有 saveProject(title, id)。我们需要去扩展 Store。
+  };
+
   // 初始自动激活第一个段落
   useEffect(() => {
     if (paragraphs.length > 0 && !activeParaId) {
@@ -157,10 +190,10 @@ export const EditorMode: React.FC = () => {
 
   // 加载所有段落的词汇以便高亮
   const fetchAllVocab = async () => {
-    const vocabMap: Record<number, Vocabulary[]> = {};
+    const vocabMap: Record<number, (Vocabulary & { isGlobal?: boolean })[]> = {};
     for (const para of paragraphs) {
       if (para.id) {
-        vocabMap[para.id] = await getVocabForParagraph(para.id);
+        vocabMap[para.id] = await getVocabForParagraph(para.id, true);
       }
     }
     setAllVocab(vocabMap);
@@ -174,7 +207,7 @@ export const EditorMode: React.FC = () => {
 
   useEffect(() => {
     if (activeParaId) {
-      getVocabForParagraph(activeParaId).then(setParaVocab);
+      getVocabForParagraph(activeParaId, true).then(setParaVocab);
     }
   }, [activeParaId]);
 
@@ -184,8 +217,35 @@ export const EditorMode: React.FC = () => {
     if (newId) setActiveParaId(newId);
   };
 
+  // 词条卡片图片 objectUrl 管理
+  const [vocabImageUrls, setVocabImageUrls] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    paraVocab.forEach(v => {
+      if (v.imageData && v.id && !vocabImageUrls[v.id]) {
+        const url = URL.createObjectURL(v.imageData);
+        setVocabImageUrls(prev => ({ ...prev, [v.id!]: url }));
+      }
+    });
+    return () => {
+      // 这里的清理逻辑需要小心，因为 useEffect 会在每次 paraVocab 改变时运行
+      // 实际上在卸载时统一清理即可
+    };
+  }, [paraVocab]);
+
   const handleSaveVocab = async () => {
     if (!activeParaId || !editingVocab.word) return;
+    
+    // 清理旧的 objectUrl (如果是替换)
+    if (editingVocab.id && vocabImageUrls[editingVocab.id]) {
+      URL.revokeObjectURL(vocabImageUrls[editingVocab.id]);
+      setVocabImageUrls(prev => {
+        const next = { ...prev };
+        delete next[editingVocab.id!];
+        return next;
+      });
+    }
+
     await saveVocab({
       ...editingVocab,
       paragraphId: activeParaId,
@@ -196,14 +256,81 @@ export const EditorMode: React.FC = () => {
     setParaVocab(updated);
     setAllVocab(prev => ({ ...prev, [activeParaId]: updated })); // 同步更新全局词汇
     setEditingVocab({ word: '', phonetic: '', definition: '', translation: '', examples: [''], color: '#E2B933' });
+    setLastSavedVocab(''); // 重置对比内容
   };
 
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null);
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+  };
+
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [lastSavedVocab, setLastSavedVocab] = useState<string>('');
+
+  // 词条自动保存逻辑
+  useEffect(() => {
+    if (!editingVocab.id || !activeParaId) return;
+
+    // 将当前编辑内容序列化，用于比较是否真的发生了变化
+    const currentContent = JSON.stringify({
+      word: editingVocab.word,
+      phonetic: editingVocab.phonetic,
+      partOfSpeech: editingVocab.partOfSpeech,
+      matchPattern: editingVocab.matchPattern,
+      definition: editingVocab.definition,
+      translation: editingVocab.translation,
+      examples: editingVocab.examples,
+      color: editingVocab.color,
+      image: editingVocab.image,
+      // imageData 无法简单序列化，暂不包含在简单对比中
+    });
+
+    // 如果内容没变（比如刚点击编辑加载进来时），不触发保存
+    if (currentContent === lastSavedVocab) return;
+
+    const timer = setTimeout(async () => {
+      setIsAutoSaving(true);
+      try {
+        await saveVocab({
+          ...editingVocab,
+          paragraphId: activeParaId,
+          examples: editingVocab.examples?.filter(e => e.trim() !== '') || [],
+          color: editingVocab.color || '#E2B933'
+        } as Vocabulary);
+        
+        // 更新本地列表和缓存，不重置编辑状态
+        const updated = await getVocabForParagraph(activeParaId, true);
+        setParaVocab(updated);
+        setAllVocab(prev => ({ ...prev, [activeParaId]: updated }));
+        setLastSavedVocab(currentContent);
+      } catch (err) {
+        console.error('Auto-save failed:', err);
+      } finally {
+        setIsAutoSaving(false);
+      }
+    }, 1000); // 1秒防抖
+
+    return () => clearTimeout(timer);
+  }, [editingVocab, activeParaId, lastSavedVocab]);
+
   const handleEditVocab = (vocab: Vocabulary) => {
-    setEditingVocab({
+    const data = {
       ...vocab,
       examples: vocab.examples.length > 0 ? vocab.examples : [''],
       color: vocab.color || '#E2B933'
-    });
+    };
+    setEditingVocab(data);
+    setLastSavedVocab(JSON.stringify({
+      word: data.word,
+      phonetic: data.phonetic,
+      partOfSpeech: data.partOfSpeech,
+      matchPattern: data.matchPattern,
+      definition: data.definition,
+      translation: data.translation,
+      examples: data.examples,
+      color: data.color,
+      image: data.image
+    }));
     // 滚动到顶部编辑区域（可选）
     const sidePanel = document.querySelector('.right-panel-content');
     if (sidePanel) sidePanel.scrollTo({ top: 0, behavior: 'smooth' });
@@ -248,15 +375,61 @@ export const EditorMode: React.FC = () => {
         <header className="flex flex-col gap-8 mb-20">
           <div className="flex justify-between items-end">
             <div className="space-y-4 flex-1 mr-12">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">文章标题</span>
-              <input 
-                type="text"
-                value={localTitle}
-                onChange={(e) => setLocalTitle(e.target.value)}
-                onBlur={handleTitleBlur}
-                className="w-full text-6xl font-serif bg-transparent border-b border-luxury-text/20 focus:border-luxury-gold outline-none pb-4 transition-colors"
-                placeholder="请输入文章标题"
-              />
+              <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">文章封面与标题</span>
+              <div className="flex gap-8 items-start">
+                {/* 封面编辑 */}
+                <div className="w-32 h-44 bg-luxury-paper/30 border border-luxury-text/10 overflow-hidden relative group/cover cursor-pointer shrink-0">
+                  {coverImageUrl ? (
+                    <img src={coverImageUrl} className="w-full h-full object-cover grayscale group-hover/cover:grayscale-0 transition-all" />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-luxury-muted/40">
+                      <ImageIcon size={24} strokeWidth={1} />
+                      <span className="text-[8px] mt-2">NO COVER</span>
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-luxury-bg/80 opacity-0 group-hover/cover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center gap-2">
+                    <label className="text-[8px] font-bold tracking-widest cursor-pointer hover:text-luxury-gold">
+                      UPLOAD
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={e => {
+                          const file = e.target.files?.[0];
+                          if (file && currentProject?.id) saveProject(localTitle, currentProject.id, { coverImageData: file, coverImage: '' });
+                        }}
+                      />
+                    </label>
+                    <button 
+                      className="text-[8px] font-bold tracking-widest hover:text-red-800"
+                      onClick={() => currentProject?.id && saveProject(localTitle, currentProject.id, { coverImage: '', coverImageData: undefined })}
+                    >
+                      REMOVE
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-4 pt-2">
+                  <input 
+                    type="text"
+                    value={localTitle}
+                    onChange={(e) => setLocalTitle(e.target.value)}
+                    onBlur={handleTitleBlur}
+                    className="w-full text-6xl font-serif bg-transparent border-b border-luxury-text/20 focus:border-luxury-gold outline-none pb-4 transition-colors"
+                    placeholder="请输入文章标题"
+                  />
+                  <div className="flex items-center gap-4">
+                    <ImageIcon size={14} className="text-luxury-gold" />
+                    <input 
+                      type="text"
+                      placeholder="或输入远程封面 URL"
+                      value={currentProject?.coverImage || ''}
+                      onChange={e => currentProject?.id && saveProject(localTitle, currentProject.id, { coverImage: e.target.value, coverImageData: undefined })}
+                      className="flex-1 bg-transparent text-[10px] uppercase tracking-widest outline-none border-b border-luxury-text/5 focus:border-luxury-gold transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <button 
               onClick={handleAddParagraph}
@@ -297,13 +470,25 @@ export const EditorMode: React.FC = () => {
                         text={para.content} 
                         vocab={allVocab[para.id!] || []} 
                         isActive={activeParaId === para.id}
+                        onVocabClick={handleEditVocab}
                       />
                     </div>
                     
                     {/* 编辑层 - 绝对定位，高度跟随高亮层，文字透明 */}
                     <textarea 
                       value={para.content}
-                      onChange={(e) => updateParagraph(para.id!, { content: e.target.value })}
+                      onChange={(e) => {
+                        const target = e.target;
+                        const start = target.selectionStart;
+                        const end = target.selectionEnd;
+                        
+                        updateParagraph(para.id!, { content: target.value });
+                        
+                        // 使用 requestAnimationFrame 确保在 React 重新渲染后恢复光标位置
+                        requestAnimationFrame(() => {
+                          target.setSelectionRange(start, end);
+                        });
+                      }}
                       placeholder="在此输入段落内容..."
                       className={cn(
                         "absolute inset-0 w-full h-full bg-transparent text-xl font-serif leading-relaxed outline-none resize-none placeholder:italic placeholder:text-luxury-muted/30 z-10",
@@ -386,7 +571,15 @@ export const EditorMode: React.FC = () => {
         {activeParaId ? (
           <div className="space-y-16">
             <header className="space-y-4">
-              <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">词库管理</span>
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">词库管理</span>
+                {isAutoSaving && (
+                  <span className="text-[8px] uppercase tracking-widest text-luxury-gold animate-pulse font-bold flex items-center gap-2">
+                    <div className="w-1 h-1 bg-luxury-gold rounded-full" />
+                    正在自动保存...
+                  </span>
+                )}
+              </div>
               <h3 className="text-4xl font-serif">第 {paragraphs.findIndex(p => p.id === activeParaId) + 1} 段</h3>
             </header>
 
@@ -537,6 +730,54 @@ export const EditorMode: React.FC = () => {
                   </div>
                 </div>
 
+                <div className="space-y-4 pt-4">
+                  <label className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-luxury-gold rounded-full" />
+                    关联图片
+                  </label>
+                  
+                  <div className="space-y-4">
+                    {(editingVocab.imageData || editingVocab.image) && (
+                      <div className="w-full h-32 bg-luxury-bg border border-luxury-text/10 relative group/vocab-img overflow-hidden">
+                        <img 
+                          src={editingVocab.imageData ? (editingVocab.id && vocabImageUrls[editingVocab.id] ? vocabImageUrls[editingVocab.id] : URL.createObjectURL(editingVocab.imageData)) : editingVocab.image} 
+                          alt="Vocab" 
+                          className="w-full h-full object-cover grayscale group-hover/vocab-img:grayscale-0 transition-all"
+                        />
+                        <button 
+                          onClick={() => setEditingVocab({...editingVocab, image: '', imageData: undefined})}
+                          className="absolute top-2 right-2 p-1 bg-red-800 text-white rounded-full opacity-0 group-hover/vocab-img:opacity-100 transition-opacity"
+                        >
+                          <CloseIcon size={10} />
+                        </button>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        placeholder="图片 URL"
+                        value={editingVocab.image || ''}
+                        onChange={e => setEditingVocab({...editingVocab, image: e.target.value, imageData: undefined})}
+                        className="flex-1 bg-transparent border-b border-luxury-text/10 text-[10px] outline-none focus:border-luxury-gold py-1"
+                      />
+                      <label className="cursor-pointer bg-luxury-gold/10 text-luxury-gold px-3 py-1 text-[10px] font-bold hover:bg-luxury-gold hover:text-luxury-bg transition-all flex items-center gap-1">
+                        <Upload size={10} />
+                        上传
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          className="hidden"
+                          onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setEditingVocab({...editingVocab, imageData: file, image: ''});
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-3 pt-6">
                   <button 
                     onClick={handleSaveVocab}
@@ -557,36 +798,94 @@ export const EditorMode: React.FC = () => {
 
               {/* 已收录词汇列表 */}
               <div className="space-y-6 pt-12 border-t border-luxury-text/10">
-                <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold flex items-center gap-2">
-                  <BookOpen size={12} className="text-luxury-gold" />
-                  当前段落已录入 ({paraVocab.length})
-                </span>
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold flex items-center gap-2">
+                    <BookOpen size={12} className="text-luxury-gold" />
+                    当前匹配词汇 ({paraVocab.length})
+                  </span>
+                </div>
+                
                 <div className="grid grid-cols-1 gap-4">
                   {paraVocab.map(v => (
                     <div 
-                      key={v.id} 
-                      className="p-6 border bg-luxury-bg group relative transition-all duration-500 cursor-pointer hover:shadow-md" 
+                      key={v.id || v.word} 
+                      className={cn(
+                        "p-6 border transition-all duration-500 cursor-pointer hover:shadow-md relative",
+                        v.isGlobal ? "bg-luxury-paper/10 border-dashed" : "bg-luxury-bg border-solid"
+                      )}
                       style={{ 
                         borderColor: v.id === editingVocab.id ? '#1A1A1A' : 'transparent',
                         borderLeftWidth: '4px',
                         borderLeftColor: v.color || '#E2B933'
                       }}
-                      onClick={() => handleEditVocab(v)}
+                      onClick={() => v.isGlobal ? setEditingVocab({ ...v, id: undefined }) : handleEditVocab(v)}
                     >
-                      <button 
-                        onClick={(e) => { e.stopPropagation(); handleDeleteVocab(v.id!); }}
-                        className="absolute top-4 right-4 text-luxury-text/20 hover:text-red-800 opacity-0 group-hover:opacity-100 transition-all"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div className="absolute top-2 right-2 flex gap-2">
+                        {v.isGlobal ? (
+                          <button 
+                            onClick={async (e) => { 
+                              e.stopPropagation(); 
+                              if (activeParaId) {
+                                await excludeWord(activeParaId, v.word);
+                                const updated = await getVocabForParagraph(activeParaId, true);
+                                setParaVocab(updated);
+                                setAllVocab(prev => ({ ...prev, [activeParaId]: updated }));
+                              }
+                            }}
+                            className="text-[8px] uppercase tracking-widest bg-red-800/10 text-red-800 px-2 py-1 hover:bg-red-800 hover:text-white transition-all font-bold"
+                            title="在此段落隐藏此词"
+                          >
+                            Hide
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleDeleteVocab(v.id!); }}
+                            className="p-2 text-luxury-text/20 hover:text-red-800 transition-all"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+                      </div>
+
                       <div className="flex items-baseline gap-2 mb-1">
                         <span className="font-serif text-xl">{v.word}</span>
                         <span className="text-[10px] text-luxury-muted italic font-serif">{v.partOfSpeech}</span>
+                        {v.isGlobal && (
+                          <span className="text-[8px] uppercase tracking-widest bg-luxury-gold/10 text-luxury-gold px-1.5 py-0.5 font-bold ml-2">Shared</span>
+                        )}
                       </div>
                       <div className="text-[10px] uppercase tracking-widest font-bold" style={{ color: v.color || '#E2B933' }}>{v.translation}</div>
+                      {v.isGlobal && (
+                        <div className="mt-2 text-[9px] text-luxury-muted italic line-clamp-1 opacity-60">点击可复制定义到本段并编辑</div>
+                      )}
                     </div>
                   ))}
                 </div>
+
+                {/* 排除列表管理 */}
+                {paragraphs.find(p => p.id === activeParaId)?.excludedWords?.length ? (
+                  <div className="pt-8 space-y-4">
+                    <span className="text-[9px] uppercase tracking-widest text-luxury-muted/60 font-bold">已从此段隐藏的全局词</span>
+                    <div className="flex flex-wrap gap-2">
+                      {paragraphs.find(p => p.id === activeParaId)?.excludedWords?.map(word => (
+                        <button
+                          key={word}
+                          onClick={async () => {
+                            if (activeParaId) {
+                              await includeWord(activeParaId, word);
+                              const updated = await getVocabForParagraph(activeParaId, true);
+                              setParaVocab(updated);
+                              setAllVocab(prev => ({ ...prev, [activeParaId]: updated }));
+                            }
+                          }}
+                          className="text-[9px] bg-luxury-text/5 text-luxury-muted px-2 py-1 flex items-center gap-2 hover:bg-luxury-gold/10 hover:text-luxury-gold transition-all"
+                        >
+                          {word} <Plus size={8} className="rotate-45" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

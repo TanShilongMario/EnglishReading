@@ -1,22 +1,29 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Volume2, Bookmark, Share2 } from 'lucide-react';
+import { X, Volume2, Bookmark, Share2, Maximize2 } from 'lucide-react';
 
 interface WordCardProps {
-  word: {
-    word: string;
-    phonetic: string;
-    partOfSpeech?: string;
-    definition: string;
-    translation: string;
-    examples: string[];
-    image?: string;
-    matchPattern?: string;
-  } | null;
+  word: (Vocabulary & { isGlobal?: boolean }) | null;
   onClose: () => void;
+  onExclude?: (word: string) => void;
 }
 
-export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
+export const WordCard: React.FC<WordCardProps> = ({ word, onClose, onExclude }) => {
+  const [isImageZoomed, setIsImageZoomed] = React.useState(false);
+  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (word?.imageData) {
+      const url = URL.createObjectURL(word.imageData);
+      setObjectUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setObjectUrl(null);
+    }
+  }, [word?.imageData, word?.id]);
+
+  const displayImage = objectUrl || word?.image;
+
   const renderHighlightedExample = (example: string, searchWord: string, patterns?: string) => {
     if (!searchWord) return example;
 
@@ -79,7 +86,19 @@ export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
 
           <div className="flex-1 overflow-y-auto custom-scrollbar pr-4">
             <header className="mb-16 space-y-4">
-              <span className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: word.color || '#E2B933' }}>Vocabulary Entry</span>
+              <div className="flex justify-between items-start">
+                <span className="text-[10px] uppercase tracking-[0.4em] font-bold" style={{ color: word.color || '#E2B933' }}>
+                  {word.isGlobal ? 'Shared Vocabulary' : 'Vocabulary Entry'}
+                </span>
+                {word.isGlobal && onExclude && (
+                  <button 
+                    onClick={() => onExclude(word.word)}
+                    className="text-[9px] uppercase tracking-widest bg-red-800/10 text-red-800 px-2 py-1 hover:bg-red-800 hover:text-white transition-all font-bold"
+                  >
+                    Hide from this para
+                  </button>
+                )}
+              </div>
               <h2 className="text-7xl font-serif leading-none tracking-tighter" style={{ color: word.color || '#E2B933' }}>{word.word}</h2>
               <div className="flex items-center gap-4 text-luxury-muted font-serif italic text-xl">
                 {word.partOfSpeech && (
@@ -120,10 +139,57 @@ export const WordCard: React.FC<WordCardProps> = ({ word, onClose }) => {
                   </div>
                 </section>
               )}
+
+              {displayImage && (
+                <div 
+                  className="w-full overflow-hidden border border-luxury-text/10 cursor-zoom-in group relative"
+                  onClick={() => setIsImageZoomed(true)}
+                >
+                  <img 
+                    src={displayImage} 
+                    alt={word.word} 
+                    className="w-full h-auto block grayscale group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-3">
+                    <div className="bg-luxury-bg/90 p-1.5 shadow-sm border border-luxury-text/10">
+                      <Maximize2 size={12} className="text-luxury-text/60" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
       )}
+
+      {/* 图片放大模态框 */}
+      <AnimatePresence>
+        {isImageZoomed && displayImage && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-luxury-bg/90 backdrop-blur-xl p-8 md:p-20"
+            onClick={() => setIsImageZoomed(false)}
+          >
+            <button 
+              onClick={() => setIsImageZoomed(false)}
+              className="absolute top-8 right-8 p-3 bg-luxury-text text-luxury-bg rounded-full hover:scale-110 transition-transform z-[110]"
+            >
+              <X size={24} />
+            </button>
+            <motion.img 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              src={displayImage} 
+              alt="Zoomed" 
+              className="max-w-full max-h-full object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 };
