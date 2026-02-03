@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@300;400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -25,10 +25,19 @@
 }
 
 /* 强制覆盖工具类，确保切换时样式生效 */
-.font-serif-classic { font-family: 'Playfair Display', serif !important; }
-.font-serif-modern { font-family: 'Lora', serif !important; }
-.font-sans-modern { font-family: 'Inter', sans-serif !important; }
-.font-sans-elegant { font-family: 'Montserrat', sans-serif !important; }
+/* 使用跨平台兼容的系统原生字体 */
+.font-serif-classic {
+  font-family: Georgia, 'STSong', 'Songti SC', 'SimSun', serif !important;
+}
+.font-serif-modern {
+  font-family: 'Times New Roman', Times, 'STZhongsong', 'SimSun', serif !important;
+}
+.font-sans-modern {
+  font-family: Inter, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+}
+.font-sans-elegant {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+}
 
 /* 昂贵纸张纹理 */
 .paper-texture {
@@ -41,8 +50,25 @@
 }
 /* 重新设计马克笔效果 - 更加精致的下划线感 */
 .marker-highlight {
-  background: linear-gradient(to bottom, transparent 50%, rgba(212, 175, 55, 0.3) 50%);
-  transition: opacity 0.5s ease;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    var(--highlight-color, rgba(212, 175, 55, 0.4)) 50%
+  );
+  transition: all 0.3s ease;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+/* 中文高亮悬停效果 - 仅颜色变化 */
+.marker-highlight:hover {
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    var(--highlight-color-hover, var(--highlight-color, rgba(212, 175, 55, 0.7))) 50%
+  );
 }
 
 /* 移除 Hover 时变厚的逻辑，保持划线精致 */

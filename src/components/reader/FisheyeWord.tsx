@@ -49,9 +49,9 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
       onMouseLeave={onMouseLeave}
       initial={false}
       animate={{ 
-        // 进一步增加挤开空间，给放大后的文字留出足够视觉间隙
-        marginLeft: hideMargin ? 0 : (isHovered && shouldScale ? 16 : 4),
-        marginRight: hideMargin ? 0 : (isHovered && shouldScale ? 16 : 4),
+        // 优化挤开空间：从 16 减小到 12，提供足够间隙的同时减少换行压力
+        marginLeft: hideMargin ? 0 : (isHovered && shouldScale ? 12 : 4),
+        marginRight: hideMargin ? 0 : (isHovered && shouldScale ? 12 : 4),
         color: isHovered ? highlightColor : 'inherit'
       }}
       transition={{ 

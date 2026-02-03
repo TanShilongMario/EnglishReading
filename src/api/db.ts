@@ -3,6 +3,8 @@ import Dexie, { Table } from 'dexie';
 export interface Project {
   id?: number;
   title: string;
+  author?: string;        // 作者字段（可选）
+  templateId?: string;    // 新增：模板ID（默认 'english-reading'）
   coverImage?: string;    // 新增：项目封面图 URL
   coverImageData?: Blob;  // 新增：项目封面图本地数据
   isSample?: boolean;     // 新增：标记是否为示例数据
@@ -21,17 +23,28 @@ export interface Paragraph {
 
 export interface Vocabulary {
   id?: number;
-  paragraphId: number; 
+  paragraphId: number;
   word: string;
-  phonetic: string;
-  partOfSpeech?: string; // 新增：词性
-  matchPattern?: string; // 新增：匹配模式（支持逗号分隔的变形词）
-  definition: string;
-  translation: string;
-  examples: string[];
-  color?: string; // 新增：自定义高亮颜色
-  image?: string;      // 新增：词汇图片 URL
-  imageData?: Blob;    // 新增：词汇图片本地数据
+
+  // 英语精读字段
+  phonetic?: string;
+  partOfSpeech?: string;
+  matchPattern?: string;
+  definition?: string;
+  translation?: string;
+  examples?: string[];
+
+  // 读书知识笔记字段
+  explanation?: string;           // 名词解释
+  extendedReading?: string;       // 扩展阅读（支持 Markdown）
+  referenceLink?: string[];       // 参考链接
+  relatedConcepts?: string[];     // 相关概念
+  sourceReference?: string;       // 原文参考（页码、章节）
+
+  // 通用字段
+  color?: string;                 // 自定义高亮颜色
+  image?: string;                 // 词汇图片 URL
+  imageData?: Blob;               // 词汇图片本地数据
 }
 
 export class AppDatabase extends Dexie {
@@ -40,7 +53,7 @@ export class AppDatabase extends Dexie {
   vocabulary!: Table<Vocabulary>;
 
   constructor() {
-    super('EnglishReadingDB_v5'); // 升级到 v5
+    super('EnglishReadingDB_v7'); // 升级到 v7（添加作者字段）
 
     // 版本 1: 原始 schema
     this.version(1).stores({
@@ -73,6 +86,25 @@ export class AppDatabase extends Dexie {
       paragraphs: '++id, projectId, order',
       vocabulary: '++id, paragraphId, word, color'
     });
+
+    // 版本 6: 添加模板系统支持
+    this.version(6).stores({
+      projects: '++id, title, createdAt, isSample, templateId',
+      paragraphs: '++id, projectId, order',
+      vocabulary: '++id, paragraphId, word, color'
+    }).upgrade(async (trans) => {
+      // 为现有项目设置默认模板
+      await trans.projects.toCollection().modify(project => {
+        if (!project.templateId) project.templateId = 'english-reading';
+      });
+    });
+
+    // 版本 7: 添加作者字段
+    this.version(7).stores({
+      projects: '++id, title, createdAt, isSample, templateId, author',
+      paragraphs: '++id, projectId, order',
+      vocabulary: '++id, paragraphId, word, color'
+    });
   }
 }
 
@@ -84,7 +116,7 @@ export const db = new AppDatabase();
  */
 export async function migrateDatabase(): Promise<void> {
   const currentVersion = await db.verno;
-  const targetVersion = 5;
+  const targetVersion = 7;
 
   if (currentVersion < targetVersion) {
     console.log(`⚠️  检测到旧版本数据库 v${currentVersion}`);

@@ -159,6 +159,8 @@ export class ImportExportService {
         // 写入项目
         const newProject: Project = {
           title: strategy === 'copy' ? `${project.title} (Copy)` : project.title,
+          author: project.author,
+          templateId: project.templateId,
           isSample: false,
           createdAt: Date.now(),
           coverImage: project.coverImage,

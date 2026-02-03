@@ -14,16 +14,24 @@ export default {
         'luxury-gold': '#E2B933',    // 金属金
       },
       fontFamily: {
-        'serif-classic': ['"Playfair Display"', 'serif'],
-        'serif-modern': ['Lora', 'serif'],
-        'sans-modern': ['Inter', 'sans-serif'],
-        'sans-elegant': ['Montserrat', 'sans-serif'],
-        'serif': ['"Playfair Display"', 'serif'],
-        'sans': ['Inter', 'sans-serif'],
+        // 使用跨平台兼容的系统原生字体
+        'serif-classic': ['Georgia', '"STSong"', '"Songti SC"', '"SimSun"', 'serif'],
+        'serif-modern': ['"Times New Roman"', 'Times', '"STZhongsong"', '"SimSun"', 'serif'],
+        'sans-modern': ['Inter', '-apple-system', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+        'sans-elegant': ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+        // 默认字体
+        'serif': ['Georgia', '"STSong"', '"Songti SC"', '"SimSun"', 'serif'],
+        'sans': ['Inter', '-apple-system', '"PingFang SC"', '"Microsoft YaHei"', 'sans-serif'],
+      },
+      fontSize: {
+        // 补充极小字号，替代 text-[9px]、text-[10px]
+        'xxs': ['0.625rem', { lineHeight: '1rem' }],     // 10px
+        'xxs2': ['0.5625rem', { lineHeight: '0.75rem' }], // 9px
       },
       letterSpacing: {
         'editorial': '0.25em',
         'button': '0.2em',
+        'widest-plus': '0.5em',
       },
       transitionDuration: {
         'cinematic': '1500ms',

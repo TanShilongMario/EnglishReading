@@ -43,7 +43,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                   <div className="flex justify-center mb-4">
                     <Command size={32} className="text-luxury-gold/40" strokeWidth={1} />
                   </div>
-                  <span className="text-[10px] uppercase tracking-[0.6em] text-luxury-gold font-bold">Manual & Version History</span>
+                  <span className="text-xxs uppercase tracking-[0.6em] text-luxury-gold font-bold">Manual & Version History</span>
                   <h2 className="text-5xl md:text-7xl font-serif tracking-tighter italic leading-none">使用说明 <span className="not-italic text-luxury-text/20 mx-2">&</span> 更新日志</h2>
                   <div className="h-px w-24 bg-luxury-gold/30 mx-auto mt-8" />
                 </header>
@@ -62,7 +62,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                       <div className="grid grid-cols-1 gap-10">
                         <div className="group space-y-3">
                           <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-3 text-luxury-text">
-                            <span className="text-luxury-gold">01.</span> 内容筹备 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Curation</span>
+                            <span className="text-luxury-gold">01.</span> 内容筹备 <span className="text-xxs font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Curation</span>
                           </h4>
                           <p className="text-sm text-luxury-muted leading-relaxed pl-10 border-l border-luxury-text/5 group-hover:border-luxury-gold/30 transition-colors">
                             在编辑模式下，您可以自由拆分段落并为每个段落配置专属词库。系统支持本地图片直传，并能实时在左侧预览标注效果。
@@ -71,7 +71,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
 
                         <div className="group space-y-3">
                           <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-3 text-luxury-text">
-                            <span className="text-luxury-gold">02.</span> 沉浸讲解 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Exhibition</span>
+                            <span className="text-luxury-gold">02.</span> 沉浸讲解 <span className="text-xxs font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Exhibition</span>
                           </h4>
                           <p className="text-sm text-luxury-muted leading-relaxed pl-10 border-l border-luxury-text/5 group-hover:border-luxury-gold/30 transition-colors">
                             进入展示模式，享受丝滑的“鱼眼”缩放交互。您可以自由切换四种预设字体（Classic/Book/Clean/Design）以匹配不同的文章调性，标点符号排版已针对放大效果深度优化。
@@ -80,7 +80,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
 
                         <div className="group space-y-3">
                           <h4 className="text-xs uppercase tracking-widest font-bold flex items-center gap-3 text-luxury-text">
-                            <span className="text-luxury-gold">03.</span> 数据安全 <span className="text-[10px] font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Backup</span>
+                            <span className="text-luxury-gold">03.</span> 数据安全 <span className="text-xxs font-normal text-luxury-muted opacity-0 group-hover:opacity-100 transition-opacity">Backup</span>
                           </h4>
                           <p className="text-sm text-luxury-muted leading-relaxed pl-10 border-l border-luxury-text/5 group-hover:border-luxury-gold/30 transition-colors">
                             利用“导入/导出”功能，您可以将课程打包为单一文件进行备份或异地传输。系统具备智能重名检测，导入时可选择覆盖或保留副本。
@@ -132,7 +132,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                           <div className="space-y-4">
                             <div className="flex flex-col">
                               <span className="text-xl font-bold text-luxury-text">v1.1.0 - 交互体验大升级</span>
-                              <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.27</span>
+                              <span className="text-xxs uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.27</span>
                             </div>
                             <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
                               <li className="flex gap-2">
@@ -173,7 +173,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                           <div className="space-y-4">
                             <div className="flex flex-col">
                               <span className="text-xl font-bold text-luxury-text">v1.0.0 - 首次正式发版</span>
-                              <span className="text-[10px] uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.20</span>
+                              <span className="text-xxs uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.20</span>
                             </div>
                             <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
                               <li className="flex gap-2">
@@ -194,7 +194,7 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
               </div>
             </div>
 
-            <footer className="bg-luxury-text text-luxury-bg/40 py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px] uppercase tracking-[0.4em] font-bold">
+            <footer className="bg-luxury-text text-luxury-bg/40 py-8 px-12 flex flex-col md:flex-row justify-between items-center gap-4 text-xxs2 uppercase tracking-[0.4em] font-bold">
               <span>CORNER BOOK. English Reading Assistant</span>
               <span className="text-luxury-bg/20 hidden md:block">|</span>
               <span className="text-luxury-gold/60">Designed for Educational Excellence</span>

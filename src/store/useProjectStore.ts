@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db, Project, Paragraph, Vocabulary } from '../api/db';
-import { SAMPLE_PROJECT } from '../api/seedData';
+import { SAMPLE_PROJECT, SAMPLE_BOOK_NOTES } from '../api/seedData';
 import { projectService, vocabularyService } from '../services';
 
 interface ProjectState {
@@ -26,6 +26,7 @@ interface ProjectState {
   includeWord: (paragraphId: number, word: string) => Promise<void>;
 
   initializeSampleData: () => Promise<boolean>;
+  resetSampleData: () => Promise<void>;
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
@@ -121,53 +122,116 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
 
   initializeSampleData: async () => {
     return await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
-      // 1. 首先检查是否有显式标记为 isSample 的项目
-      const existingByFlag = await db.projects.where('isSample').equals(1).first();
-      
-      if (existingByFlag) {
-        // 加固：如果已存在示例项目但缺少封面，则自动补全
-        if (!existingByFlag.coverImage && SAMPLE_PROJECT.project.coverImage) {
-          await db.projects.update(existingByFlag.id!, { 
-            coverImage: SAMPLE_PROJECT.project.coverImage 
-          });
-          return true; // 返回 true 以触发 UI 刷新
-        }
-        return false;
-      }
+      const samples = [
+        { data: SAMPLE_PROJECT, name: '英语精读示例', templateId: 'english-reading' },
+        { data: SAMPLE_BOOK_NOTES, name: '读书笔记示例', templateId: 'knowledge-notes' }
+      ];
 
-      // 2. 如果没有标记，再检查是否有原始标题的项目（兼容旧版本）
-      const existingByTitle = await db.projects.where('title').equals(SAMPLE_PROJECT.project.title).first();
-      
-      if (existingByTitle) {
-        // 如果找到了原始标题的项目，给它补上 isSample 标记和封面
-        await db.projects.update(existingByTitle.id!, { 
+      let createdNew = false;
+
+      // 获取所有现有的示例项目
+      const existingSamples = await db.projects
+        .where('isSample')
+        .equals(true)
+        .toArray();
+
+      for (const sample of samples) {
+        // 检查是否已存在该示例（通过 title）
+        const exists = existingSamples.some(p => p.title === sample.data.project.title);
+
+        if (exists) {
+          // 已存在，跳过
+          continue;
+        }
+
+        // 不存在，创建示例项目
+        const projectId = await db.projects.add({
+          ...sample.data.project,
           isSample: true,
-          coverImage: SAMPLE_PROJECT.project.coverImage 
-        });
-        return true;
-      }
+          templateId: sample.templateId
+        } as Project);
 
-      // 3. 确实不存在，则创建
-      const projectId = await db.projects.add({
-        ...SAMPLE_PROJECT.project,
-        isSample: true
-      } as Project);
+        for (const para of sample.data.paragraphs) {
+          const { vocabulary, ...paraData } = para;
+          const paragraphId = await db.paragraphs.add({
+            ...paraData,
+            projectId: projectId as number,
+          } as Paragraph);
 
-      for (const para of SAMPLE_PROJECT.paragraphs) {
-        const { vocabulary, ...paraData } = para;
-        const paragraphId = await db.paragraphs.add({
-          ...paraData,
-          projectId: projectId as number,
-        } as Paragraph);
-
-        for (const vocab of vocabulary) {
-          await db.vocabulary.add({
-            ...vocab,
-            paragraphId: paragraphId as number
-          } as Vocabulary);
+          for (const vocab of vocabulary) {
+            await db.vocabulary.add({
+              ...vocab,
+              paragraphId: paragraphId as number
+            } as Vocabulary);
+          }
         }
+
+        createdNew = true;
       }
-      return true;
+
+      return createdNew;
     });
+  },
+
+  resetSampleData: async () => {
+    try {
+      await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
+        // 1. 删除所有标记为 isSample 的项目及其关联数据
+        const sampleProjects = await db.projects.where('isSample').equals(true).toArray();
+
+        for (const project of sampleProjects) {
+          const projectId = project.id!;
+
+          // 删除项目的所有段落
+          const paragraphs = await db.paragraphs.where('projectId').equals(projectId).toArray();
+
+          // 删除每个段落的词汇
+          for (const para of paragraphs) {
+            await db.vocabulary.where('paragraphId').equals(para.id!).delete();
+          }
+
+          // 删除段落
+          await db.paragraphs.where('projectId').equals(projectId).delete();
+
+          // 删除项目
+          await db.projects.delete(projectId);
+        }
+
+        // 2. 重新创建所有示例项目
+        const samples = [
+          { data: SAMPLE_PROJECT, templateId: 'english-reading' },
+          { data: SAMPLE_BOOK_NOTES, templateId: 'knowledge-notes' }
+        ];
+
+        for (const sample of samples) {
+          const projectId = await db.projects.add({
+            ...sample.data.project,
+            isSample: true,
+            templateId: sample.templateId
+          } as Project);
+
+          for (const para of sample.data.paragraphs) {
+            const { vocabulary, ...paraData } = para;
+            const paragraphId = await db.paragraphs.add({
+              ...paraData,
+              projectId: projectId as number,
+            } as Paragraph);
+
+            for (const vocab of vocabulary) {
+              await db.vocabulary.add({
+                ...vocab,
+                paragraphId: paragraphId as number
+              } as Vocabulary);
+            }
+          }
+        }
+      });
+
+      // 清空当前项目状态
+      set({ currentProject: null, paragraphs: [] });
+    } catch (error) {
+      console.error('重置示例数据失败:', error);
+      throw error;
+    }
   }
 }));

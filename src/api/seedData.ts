@@ -1,4 +1,5 @@
 import { Project, Paragraph, Vocabulary } from './db';
+import { SAMPLE_BOOK_NOTES } from './sampleBookNotes';
 
 const HIGHLIGHT_COLORS = [
   '#E2B933', // Luxury Gold
@@ -352,3 +353,6 @@ export const SAMPLE_PROJECT: {
     }
   ]
 };
+
+// 导出读书笔记示例
+export { SAMPLE_BOOK_NOTES };

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { db, Project, Vocabulary, Paragraph } from '../../api/db';
-import { BookOpen, Search, ArrowUpRight, Trash2, ChevronRight } from 'lucide-react';
+import { BookOpen, Search, ArrowUpRight, Trash2, ChevronRight, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface VocabularyBookProps {
   onNavigateToArticle: (projectId: number, paragraphId: number, vocabId?: number) => void;
+  onNavigateToEdit: (projectId: number, paragraphId: number, vocabId: number) => void;
 }
 
-export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArticle }) => {
+export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArticle, onNavigateToEdit }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [vocabList, setVocabList] = useState<Vocabulary[]>([]);
@@ -56,7 +57,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
       {/* 左侧：课程/文章导航 */}
       <div className="w-1/4 border-r border-luxury-text/10 p-12 overflow-y-auto custom-scrollbar">
         <header className="mb-12 space-y-4">
-          <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">Archives</span>
+          <span className="text-xxs uppercase tracking-[0.4em] text-luxury-gold font-bold">Archives</span>
           <h2 className="text-4xl font-serif">课程索引</h2>
         </header>
 
@@ -71,7 +72,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                   : 'border-transparent text-luxury-muted hover:bg-luxury-paper/10'
               }`}
             >
-              <div className="text-[9px] uppercase tracking-widest opacity-50 mb-1">
+              <div className="text-xxs2 uppercase tracking-widest opacity-50 mb-1">
                 {new Date(project.createdAt).toLocaleDateString()}
               </div>
               <div className="text-lg leading-tight line-clamp-2">{project.title}</div>
@@ -84,7 +85,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
       <div className="flex-1 flex flex-col p-16 overflow-hidden">
         <header className="flex justify-between items-end mb-16">
           <div className="space-y-4">
-            <span className="text-[10px] uppercase tracking-[0.4em] text-luxury-gold font-bold">Lexicon</span>
+            <span className="text-xxs uppercase tracking-[0.4em] text-luxury-gold font-bold">Lexicon</span>
             <h2 className="text-6xl font-serif">单词本</h2>
           </div>
 
@@ -128,7 +129,15 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                       </div>
                       
                       <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
+                          onClick={() => onNavigateToEdit(selectedProjectId!, vocab.paragraphId, vocab.id!)}
+                          className="p-2 text-luxury-muted hover:text-luxury-text transition-colors"
+                          style={{ color: vocab.color || '#E2B933' }}
+                          title="编辑词条"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
                           onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId, vocab.id)}
                           className="p-2 text-luxury-muted hover:opacity-70 transition-colors"
                           style={{ color: vocab.color || '#E2B933' }}
@@ -136,7 +145,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
                         >
                           <ArrowUpRight size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteVocab(vocab.id!)}
                           className="p-2 text-luxury-muted hover:text-red-800 transition-colors"
                         >
@@ -152,7 +161,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
 
                     {/* 快速索引装饰 */}
                     <div 
-                      className="absolute bottom-4 right-4 flex items-center gap-2 text-[9px] uppercase tracking-widest font-bold opacity-0 group-hover:opacity-100 cursor-pointer transition-all translate-x-4 group-hover:translate-x-0"
+                      className="absolute bottom-4 right-4 flex items-center gap-2 text-xxs2 uppercase tracking-widest font-bold opacity-0 group-hover:opacity-100 cursor-pointer transition-all translate-x-4 group-hover:translate-x-0"
                       style={{ color: vocab.color || '#E2B933' }}
                       onClick={() => onNavigateToArticle(selectedProjectId!, vocab.paragraphId, vocab.id)}
                     >
