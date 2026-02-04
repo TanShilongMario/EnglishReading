@@ -36,24 +36,37 @@ export interface Paragraph {
   excludedWords?: string[];
 }
 
+export interface ContextualExample {
+  text: string;
+  sourceTitle: string;
+  projectId: number;
+}
+
 export interface Vocabulary {
   id?: number;
   paragraphId: number;
   word: string;
+
+  // 英语精读字段
   phonetic?: string;
   partOfSpeech?: string;
   matchPattern?: string;
   definition?: string;
   translation?: string;
   examples?: string[];
-  explanation?: string;
-  extendedReading?: string;
-  referenceLink?: string[];
-  relatedConcepts?: string[];
-  sourceReference?: string;
-  color?: string;
-  image?: string;
-  imageData?: Blob;
+
+  // 读书知识笔记字段
+  explanation?: string;           // 名词解释
+  extendedReading?: string;       // 扩展阅读（支持 Markdown）
+  referenceLink?: string[];       // 参考链接
+  relatedConcepts?: string[];     // 相关概念
+  sourceReference?: string;       // 原文参考（页码、章节）
+
+  // 通用字段
+  color?: string;                 // 自定义高亮颜色
+  image?: string;                 // 词汇图片 URL
+  imageData?: Blob;               // 词汇图片本地数据
+  contextualExamples?: ContextualExample[]; // 新增：来自其他文章的选中的语境例句
 }
 
 export class AppDatabase extends Dexie {
@@ -103,6 +116,13 @@ export class AppDatabase extends Dexie {
     });
 
     this.version(7).stores({
+      projects: '++id, title, createdAt, isSample, templateId, author',
+      paragraphs: '++id, projectId, order',
+      vocabulary: '++id, paragraphId, word, color'
+    });
+
+    // 版本 8: 添加语境例句支持
+    this.version(8).stores({
       projects: '++id, title, createdAt, isSample, templateId, author',
       paragraphs: '++id, projectId, order',
       vocabulary: '++id, paragraphId, word, color'
@@ -194,7 +214,7 @@ export async function migrateDatabase(): Promise<void> {
   await migrateFromLegacyDatabases();
 
   const currentVersion = await db.verno;
-  const targetVersion = 7;
+  const targetVersion = 8;
 
   if (currentVersion < targetVersion) {
     await db.open();

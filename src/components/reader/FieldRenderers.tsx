@@ -136,6 +136,32 @@ export const TagsField: React.FC<{ config: FieldConfig; values: string[]; word?:
             </p>
           </div>
         ))}
+
+        {/* 渲染选中的跨文章语境例句 */}
+        {word.contextualExamples && word.contextualExamples.length > 0 && (
+          <div className="space-y-8 pt-8 mt-8 border-t border-luxury-text/5">
+            <div className="flex items-center gap-3 opacity-40">
+              <div className="h-px flex-1 bg-luxury-text/20" />
+              <span className="text-xxs uppercase tracking-[0.2em] font-bold">More Contexts</span>
+              <div className="h-px flex-1 bg-luxury-text/20" />
+            </div>
+            <div className="space-y-10">
+              {word.contextualExamples.map((ex: any, i: number) => (
+                <div 
+                  key={`ctx-${i}`} 
+                  className="relative pl-8 border-l-2 border-luxury-gold/20 group"
+                >
+                  <p className="text-lg font-serif italic leading-relaxed text-luxury-muted group-hover:text-luxury-text transition-colors duration-500 text-left">
+                    {renderHighlightedExample(ex.text)}
+                  </p>
+                  <p className="mt-3 text-xxs2 uppercase tracking-widest font-bold text-luxury-gold/40 text-left">
+                    — FROM 《{ex.sourceTitle}》
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

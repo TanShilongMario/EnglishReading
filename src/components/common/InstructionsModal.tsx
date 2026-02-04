@@ -126,6 +126,39 @@ export const InstructionsModal: React.FC<InstructionsModalProps> = ({ isOpen, on
                       </div>
 
                       <div className="relative pl-8 space-y-12 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-px before:bg-luxury-text/10">
+                        {/* v1.2.0 */}
+                        <div className="relative">
+                          <div className="absolute -left-[35px] top-1.5 w-3 h-3 bg-luxury-gold border-2 border-luxury-bg rounded-full shadow-sm" />
+                          <div className="space-y-4">
+                            <div className="flex flex-col">
+                              <span className="text-xl font-bold text-luxury-text">v1.2.0 - 全库语料联动系统</span>
+                              <span className="text-xxs uppercase tracking-widest text-luxury-muted font-bold mt-1">2026.01.27</span>
+                            </div>
+                            <ul className="text-xs text-luxury-muted space-y-3 leading-relaxed">
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>全库语料联动</b>：自动搜索全书库中包含关键词的句子，支持勾选作为词条的真实语境例句。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>单词本深度升级</b>：新增“语境跳转”功能，支持从单词本一键定位至库内任意出现该词的文章段落。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>数据救灾迁移</b>：内置强力迁移工具，支持打捞和同步多个历史版本的本地数据库，确保数据无损。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>部署路由优化</b>：完美支持 Vercel/Netlify 等平台的 SPA 路由，解决子页面刷新 404 问题。</span>
+                              </li>
+                              <li className="flex gap-2">
+                                <span className="text-luxury-gold">•</span>
+                                <span><b>UX 细节调优</b>：调大了单词本卡片的阅读字号，优化了编辑器表单的布局逻辑。</span>
+                              </li>
+                            </ul>
+                          </div>
+                        </div>
+
                         {/* v1.1.0 */}
                         <div className="relative">
                           <div className="absolute -left-[35px] top-1.5 w-3 h-3 bg-luxury-gold border-2 border-luxury-bg rounded-full shadow-sm" />

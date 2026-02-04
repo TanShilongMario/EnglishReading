@@ -384,6 +384,7 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
       referenceLink: editingVocab.referenceLink,
       relatedConcepts: editingVocab.relatedConcepts,
       sourceReference: editingVocab.sourceReference,
+      contextualExamples: editingVocab.contextualExamples,
       // imageData 无法简单序列化，暂不包含在简单对比中
     });
 
@@ -442,7 +443,8 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
       extendedReading: data.extendedReading,
       referenceLink: data.referenceLink,
       relatedConcepts: data.relatedConcepts,
-      sourceReference: data.sourceReference
+      sourceReference: data.sourceReference,
+      contextualExamples: data.contextualExamples
     }));
     // 滚动到顶部编辑区域（可选）
     const sidePanel = document.querySelector('.right-panel-content');
