@@ -126,59 +126,75 @@ async function migrateFromLegacyDatabases(): Promise<void> {
       const exists = await Dexie.exists(legacyName);
       if (!exists) continue;
 
-      console.log(`🔍 发现旧版数据库: ${legacyName}，正在尝试自动迁移数据...`);
+      console.log(`🔍 发现旧版数据库: ${legacyName}，正在读取数据...`);
       
       const legacyDb = new Dexie(legacyName);
-      // 根据旧版可能存在的 schema 动态定义
+      // 必须定义 schema 才能打开，即使我们不知道确切版本，定义 version(1) 通常足够读取数据
       legacyDb.version(1).stores({
-        projects: '++id, title, createdAt',
-        paragraphs: '++id, projectId, order',
-        vocabulary: '++id, paragraphId, word'
+        projects: '++id, title',
+        paragraphs: '++id, projectId',
+        vocabulary: '++id, paragraphId'
       });
 
       await legacyDb.open();
 
-      const projects = await legacyDb.table('projects').toArray();
-      if (projects.length === 0) {
-        await legacyDb.close();
-        continue;
-      }
+      // --- 第一步：一次性提取所有数据到内存，避免在事务中跨库查询 ---
+      const oldProjects = await legacyDb.table('projects').toArray();
+      const oldParagraphs = await legacyDb.table('paragraphs').toArray();
+      const oldVocabularies = await legacyDb.table('vocabulary').toArray();
+      
+      await legacyDb.close();
 
-      // 导入逻辑
+      if (oldProjects.length === 0) continue;
+
+      // --- 第二步：在新库事务中批量写入 ---
       await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
-        for (const p of projects) {
-          // 检查当前 DB 是否已存在同名项目（防止重复迁移）
-          const alreadyExists = await db.projects.where('title').equals(p.title).first();
-          if (alreadyExists) continue;
+        for (const p of oldProjects) {
+          const oldProjectId = p.id;
+          
+          // 检查当前 DB 是否已存在同名项目
+          const existingProject = await db.projects.where('title').equals(p.title).first();
+          
+          let targetProjectId: number;
+          
+          if (existingProject) {
+            // 如果项目已存在，检查它是否有段落
+            const currentParaCount = await db.paragraphs.where('projectId').equals(existingProject.id!).count();
+            if (currentParaCount > 0) {
+              console.log(`项目 "${p.title}" 已完整存在，跳过。`);
+              continue; 
+            }
+            // 如果存在标题但没段落，我们需要修复它
+            console.log(`项目 "${p.title}" 缺少段落，正在补全...`);
+            targetProjectId = existingProject.id!;
+          } else {
+            // 彻底的新项目
+            delete p.id;
+            targetProjectId = await db.projects.add(p) as number;
+          }
 
-          const oldId = p.id;
-          delete p.id; // 让新 DB 生成新 ID
-          const newProjectId = await db.projects.add(p);
-
-          const paragraphs = await legacyDb.table('paragraphs').where('projectId').equals(oldId).toArray();
-          for (const para of paragraphs) {
+          // 搬运该项目下的段落
+          const relatedParas = oldParagraphs.filter(para => para.projectId === oldProjectId);
+          for (const para of relatedParas) {
             const oldParaId = para.id;
             delete para.id;
-            para.projectId = newProjectId as number;
-            const newParaId = await db.paragraphs.add(para);
+            para.projectId = targetProjectId;
+            const newParaId = await db.paragraphs.add(para) as number;
 
-            const vocabs = await legacyDb.table('vocabulary').where('paragraphId').equals(oldParaId).toArray();
-            for (const v of vocabs) {
+            // 搬运该段落下的词汇
+            const relatedVocabs = oldVocabularies.filter(v => v.paragraphId === oldParaId);
+            for (const v of relatedVocabs) {
               delete v.id;
-              v.paragraphId = newParaId as number;
+              v.paragraphId = newParaId;
               await db.vocabulary.add(v);
             }
           }
         }
       });
 
-      console.log(`✅ 从 ${legacyName} 迁移数据成功！`);
-      await legacyDb.close();
-      
-      // 迁移成功后建议删除旧库，避免重复提醒，但为了安全也可以保留
-      // await Dexie.delete(legacyName); 
+      console.log(`✅ 从 ${legacyName} 同步数据完成！`);
     } catch (err) {
-      console.error(`❌ 从 ${legacyName} 迁移数据失败:`, err);
+      console.error(`❌ 从 ${legacyName} 同步失败:`, err);
     }
   }
 }
