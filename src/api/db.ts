@@ -1,5 +1,11 @@
 import Dexie, { Table } from 'dexie';
 
+// ----------------------------------------------------------------------------
+// 数据库稳定化配置
+// ----------------------------------------------------------------------------
+const DB_NAME = 'EnglishReadingDB_v7'; // 这是当前稳定的数据库名，未来请勿在此更改版本号，应通过 Dexie 的 version() 升级
+const LEGACY_DB_NAMES = ['EnglishReadingDB_v3', 'EnglishReadingDB_v5'];
+
 export interface Project {
   id?: number;
   title: string;
@@ -53,7 +59,7 @@ export class AppDatabase extends Dexie {
   vocabulary!: Table<Vocabulary>;
 
   constructor() {
-    super('EnglishReadingDB_v7'); // 升级到 v7（添加作者字段）
+    super(DB_NAME); 
 
     // 版本 1: 原始 schema
     this.version(1).stores({
@@ -111,18 +117,89 @@ export class AppDatabase extends Dexie {
 export const db = new AppDatabase();
 
 /**
+ * 跨数据库自动迁移工具
+ * 检查是否存在旧名称的数据库，并将其数据导入当前数据库
+ */
+async function migrateFromLegacyDatabases(): Promise<void> {
+  for (const legacyName of LEGACY_DB_NAMES) {
+    try {
+      const exists = await Dexie.exists(legacyName);
+      if (!exists) continue;
+
+      console.log(`🔍 发现旧版数据库: ${legacyName}，正在尝试自动迁移数据...`);
+      
+      const legacyDb = new Dexie(legacyName);
+      // 根据旧版可能存在的 schema 动态定义
+      legacyDb.version(1).stores({
+        projects: '++id, title, createdAt',
+        paragraphs: '++id, projectId, order',
+        vocabulary: '++id, paragraphId, word'
+      });
+
+      await legacyDb.open();
+
+      const projects = await legacyDb.table('projects').toArray();
+      if (projects.length === 0) {
+        await legacyDb.close();
+        continue;
+      }
+
+      // 导入逻辑
+      await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
+        for (const p of projects) {
+          // 检查当前 DB 是否已存在同名项目（防止重复迁移）
+          const alreadyExists = await db.projects.where('title').equals(p.title).first();
+          if (alreadyExists) continue;
+
+          const oldId = p.id;
+          delete p.id; // 让新 DB 生成新 ID
+          const newProjectId = await db.projects.add(p);
+
+          const paragraphs = await legacyDb.table('paragraphs').where('projectId').equals(oldId).toArray();
+          for (const para of paragraphs) {
+            const oldParaId = para.id;
+            delete para.id;
+            para.projectId = newProjectId as number;
+            const newParaId = await db.paragraphs.add(para);
+
+            const vocabs = await legacyDb.table('vocabulary').where('paragraphId').equals(oldParaId).toArray();
+            for (const v of vocabs) {
+              delete v.id;
+              v.paragraphId = newParaId as number;
+              await db.vocabulary.add(v);
+            }
+          }
+        }
+      });
+
+      console.log(`✅ 从 ${legacyName} 迁移数据成功！`);
+      await legacyDb.close();
+      
+      // 迁移成功后建议删除旧库，避免重复提醒，但为了安全也可以保留
+      // await Dexie.delete(legacyName); 
+    } catch (err) {
+      console.error(`❌ 从 ${legacyName} 迁移数据失败:`, err);
+    }
+  }
+}
+
+/**
  * 数据库迁移工具
  * 在应用启动时调用，确保数据兼容性
  */
 export async function migrateDatabase(): Promise<void> {
+  // 1. 先尝试从完全不同名称的旧数据库迁移
+  await migrateFromLegacyDatabases();
+
+  // 2. 处理当前数据库的内部版本升级
   const currentVersion = await db.verno;
   const targetVersion = 7;
 
   if (currentVersion < targetVersion) {
-    console.log(`⚠️  检测到旧版本数据库 v${currentVersion}`);
-    console.log(`📦 正在迁移到 v${targetVersion}，请勿关闭页面...`);
+    console.log(`⚠️  检测到旧版本数据库结构 v${currentVersion}`);
+    console.log(`📦 正在升级到 v${targetVersion}，请勿关闭页面...`);
     await db.open();
-    console.log('✅ 数据库迁移完成！');
+    console.log('✅ 数据库升级完成！');
   }
 
   return db.open();

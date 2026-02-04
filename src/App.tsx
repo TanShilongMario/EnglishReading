@@ -30,7 +30,8 @@ function App() {
       <div className="min-h-screen bg-luxury-bg flex items-center justify-center font-serif">
         <div className="text-center space-y-6">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-luxury-gold"></div>
-          <p className="text-luxury-muted text-sm uppercase tracking-widest">数据库迁移中...</p>
+          <p className="text-luxury-muted text-sm uppercase tracking-widest">正在检查并同步您的本地文章库...</p>
+          <p className="text-luxury-muted/40 text-[10px]">这可能需要几秒钟，请勿关闭页面</p>
         </div>
       </div>
     );
