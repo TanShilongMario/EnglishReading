@@ -313,18 +313,25 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               }
 
               const wordToMatch = item.word || item.content;
+              const isWordWithPunct = item.type === 'word-with-punct' && item.punct;
               return (
-                <FisheyeWord
-                  key={item.index}
-                  index={item.index}
-                  word={wordToMatch}
-                  hoveredIndex={null}
-                  isHovered={isPhraseHovered}
-                  isHighlighted={true}
-                  color={vocab.color}
-                  hideMargin={true}
-                  fontClass={fontClass}
-                />
+                <React.Fragment key={item.index}>
+                  <FisheyeWord
+                    index={item.index}
+                    word={wordToMatch}
+                    hoveredIndex={null}
+                    isHovered={isPhraseHovered}
+                    isHighlighted={true}
+                    color={vocab.color}
+                    hideMargin={true}
+                    fontClass={fontClass}
+                  />
+                  {isWordWithPunct && (
+                    <span className={cn("text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
+                      {item.punct}
+                    </span>
+                  )}
+                </React.Fragment>
               );
             })}
           </motion.span>
