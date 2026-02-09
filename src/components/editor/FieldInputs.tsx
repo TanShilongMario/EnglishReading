@@ -112,7 +112,7 @@ export const ImageInput: React.FC<{ config: FieldConfig; value: string; imageDat
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    if (imageData) {
+    if (imageData instanceof Blob) {
       const url = URL.createObjectURL(imageData);
       setObjectUrl(url);
       return () => URL.revokeObjectURL(url);

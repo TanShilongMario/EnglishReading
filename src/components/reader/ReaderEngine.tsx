@@ -75,7 +75,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
   const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   React.useEffect(() => {
-    if (imageData) {
+    if (imageData instanceof Blob) {
       const url = URL.createObjectURL(imageData);
       setObjectUrl(url);
       return () => URL.revokeObjectURL(url);

@@ -199,7 +199,7 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
 
   useEffect(() => {
     paragraphs.forEach(para => {
-      if (para.imageData && para.id && !paragraphImageUrls[para.id]) {
+      if (para.imageData instanceof Blob && para.id && !paragraphImageUrls[para.id]) {
         const url = URL.createObjectURL(para.imageData);
         setParagraphImageUrls(prev => ({ ...prev, [para.id!]: url }));
       }
@@ -245,7 +245,7 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
   const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (currentProject?.coverImageData) {
+    if (currentProject?.coverImageData instanceof Blob) {
       const url = URL.createObjectURL(currentProject.coverImageData);
       setCoverImageUrl(url);
       return () => URL.revokeObjectURL(url);
@@ -311,7 +311,7 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
 
   useEffect(() => {
     paraVocab.forEach(v => {
-      if (v.imageData && v.id && !vocabImageUrls[v.id]) {
+      if (v.imageData instanceof Blob && v.id && !vocabImageUrls[v.id]) {
         const url = URL.createObjectURL(v.imageData);
         setVocabImageUrls(prev => ({ ...prev, [v.id!]: url }));
       }

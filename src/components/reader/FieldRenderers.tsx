@@ -225,10 +225,12 @@ export const ImageField: React.FC<{ config: FieldConfig; value: string; imageDat
   const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    if (imageData) {
+    if (imageData instanceof Blob) {
       const url = URL.createObjectURL(imageData);
       setObjectUrl(url);
       return () => URL.revokeObjectURL(url);
+    } else {
+      setObjectUrl(null);
     }
   }, [imageData]);
 

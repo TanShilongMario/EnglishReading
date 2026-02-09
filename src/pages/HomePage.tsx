@@ -226,7 +226,7 @@ export const HomePage: React.FC = () => {
   // 处理项目封面 URL
   useEffect(() => {
     projects.forEach(project => {
-      if (project.coverImageData && !projectCoverUrls[project.id]) {
+      if (project.coverImageData instanceof Blob && project.id && !projectCoverUrls[project.id]) {
         const url = URL.createObjectURL(project.coverImageData);
         setProjectCoverUrls(prev => ({ ...prev, [project.id]: url }));
       }
