@@ -405,10 +405,10 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
   }, [groups, segmentVocabMap, hoveredVocabId, hoveredIndex, onWordClick, fontClass]);
 
   return (
-    <div className="flex flex-col w-full max-w-[1600px] mx-auto h-full overflow-hidden px-16 relative">
-      <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-12 pb-32">
+    <div className="flex flex-col w-full max-w-[1600px] mx-auto h-full overflow-hidden px-4 sm:px-8 lg:px-16 relative">
+      <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar pt-8 lg:pt-12 pb-16">
         {/* 段落图片 - 固定 240px，保持位置占位 */}
-        <div className="w-full max-w-4xl h-[240px] mb-12 self-center relative flex items-center justify-center">
+        <div className="w-full max-w-4xl h-[160px] sm:h-[200px] lg:h-[240px] mb-6 sm:mb-8 lg:mb-12 self-center relative flex items-center justify-center">
           {displayImage ? (
             <motion.div 
               initial={{ opacity: 0, y: 40 }}

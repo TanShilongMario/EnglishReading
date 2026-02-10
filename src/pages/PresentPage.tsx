@@ -70,7 +70,7 @@ export const PresentPage: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-80px)] overflow-hidden relative">
+    <div className="h-[calc(100vh-80px-56px)] overflow-hidden relative">
       <ReaderEngine
         content={currentParagraph.content}
         imageUrl={currentParagraph.image}
@@ -98,63 +98,65 @@ export const PresentPage: React.FC = () => {
         }}
       />
 
-      {/* 字体选择与单词本快速入口 - 位于左下角 */}
-      <div className="fixed bottom-[144px] left-16 z-40 space-y-4 w-72">
-        {/* 字体选择器 */}
-        <div className="flex flex-col gap-3 bg-luxury-bg/90 backdrop-blur-md border border-luxury-text/20 p-3 shadow-sm w-full">
-          <span className="text-xxs2 uppercase tracking-[0.2em] text-luxury-gold font-bold mb-1">Typography</span>
-          <div className="flex gap-2">
-            {[
-              { id: 'serif-classic', label: 'Classic', title: 'Georgia / 宋体' },
-              { id: 'serif-modern', label: 'Book', title: 'Times New Roman / 宋体' },
-              { id: 'sans-modern', label: 'Clean', title: 'Inter / 微软雅黑' },
-              { id: 'sans-elegant', label: 'System', title: 'System Font / 苹方/微软雅黑' },
-            ].map((f) => (
-              <button
-                key={f.id}
-                onClick={() => {
-                  setReaderFont(f.id as any);
-                }}
-                title={f.title}
-                className={cn(
-                  "flex-1 h-10 flex items-center justify-center text-xs uppercase tracking-wider border transition-all duration-500",
-                  readerFont === f.id
-                    ? "bg-luxury-text text-luxury-bg border-luxury-text shadow-lg font-semibold"
-                    : "bg-transparent text-luxury-text/40 border-luxury-text/10 hover:border-luxury-gold hover:text-luxury-text"
-                )}
-              >
-                {f.label}
-              </button>
-            ))}
+      {/* 底部工具栏 - 字体选择 + 分页导航，水平排列固定在底部 */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-luxury-bg/90 backdrop-blur-md border-t border-luxury-text/10">
+        <div className="max-w-[1600px] mx-auto flex items-center justify-between px-4 sm:px-8 lg:px-16 h-14">
+          {/* 字体选择器 */}
+          <div className="flex items-center gap-3">
+            <span className="text-xxs2 uppercase tracking-[0.2em] text-luxury-gold font-bold hidden sm:inline">Typography</span>
+            <div className="flex gap-1">
+              {[
+                { id: 'serif-classic', label: 'Classic', title: 'Georgia / 宋体' },
+                { id: 'serif-modern', label: 'Book', title: 'Times New Roman / 宋体' },
+                { id: 'sans-modern', label: 'Clean', title: 'Inter / 微软雅黑' },
+                { id: 'sans-elegant', label: 'System', title: 'System Font / 苹方/微软雅黑' },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => {
+                    setReaderFont(f.id as any);
+                  }}
+                  title={f.title}
+                  className={cn(
+                    "px-2.5 sm:px-3 h-8 flex items-center justify-center text-[10px] sm:text-xs uppercase tracking-wider border transition-all duration-500",
+                    readerFont === f.id
+                      ? "bg-luxury-text text-luxury-bg border-luxury-text shadow-lg font-semibold"
+                      : "bg-transparent text-luxury-text/40 border-luxury-text/10 hover:border-luxury-gold hover:text-luxury-text"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* 分页导航 */}
+          {paragraphs.length > 1 && (
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                disabled={pageIndex === 0}
+                onClick={() => { setPageIndex(prev => prev - 1); setActiveWord(null); }}
+                className="text-luxury-text/40 hover:text-luxury-text disabled:opacity-10 transition-colors"
+              >
+                <ChevronLeft size={18} strokeWidth={1.5} />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-xxs2 uppercase tracking-[0.3em] text-luxury-gold font-bold hidden sm:inline">Plateau</span>
+                <span className="font-serif italic text-sm leading-none">
+                  {String(pageIndex + 1).padStart(2, '0')} / {String(paragraphs.length).padStart(2, '0')}
+                </span>
+              </div>
+              <button
+                disabled={pageIndex === paragraphs.length - 1}
+                onClick={() => { setPageIndex(prev => prev + 1); setActiveWord(null); }}
+                className="text-luxury-text/40 hover:text-luxury-text disabled:opacity-10 transition-colors"
+              >
+                <ChevronRight size={18} strokeWidth={1.5} />
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* 底部导航 - 悬浮控制 */}
-      {paragraphs.length > 1 && (
-        <div className="fixed bottom-12 left-16 flex items-center justify-between bg-luxury-bg/90 backdrop-blur-md border border-luxury-text/20 px-6 py-3 z-40 w-72">
-          <button
-            disabled={pageIndex === 0}
-            onClick={() => { setPageIndex(prev => prev - 1); setActiveWord(null); }}
-            className="text-luxury-text/40 hover:text-luxury-text disabled:opacity-10 transition-colors"
-          >
-            <ChevronLeft size={20} strokeWidth={1.5} />
-          </button>
-          <div className="flex flex-col items-center">
-            <span className="text-xxs2 uppercase tracking-[0.3em] text-luxury-gold font-bold">Plateau</span>
-            <span className="font-serif italic text-sm leading-none">
-              {String(pageIndex + 1).padStart(2, '0')} / {String(paragraphs.length).padStart(2, '0')}
-            </span>
-          </div>
-          <button
-            disabled={pageIndex === paragraphs.length - 1}
-            onClick={() => { setPageIndex(prev => prev + 1); setActiveWord(null); }}
-            className="text-luxury-text/40 hover:text-luxury-text disabled:opacity-10 transition-colors"
-          >
-            <ChevronRight size={20} strokeWidth={1.5} />
-          </button>
-        </div>
-      )}
     </div>
   );
 };
