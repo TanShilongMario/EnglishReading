@@ -32,6 +32,8 @@ export interface Paragraph {
   content: string;
   image?: string;
   imageData?: Blob;
+  images?: string[];              // 多图 URL
+  imagesData?: Blob[];            // 多图本地数据
   order: number;
   excludedWords?: string[];
 }
@@ -66,6 +68,8 @@ export interface Vocabulary {
   color?: string;                 // 自定义高亮颜色
   image?: string;                 // 词汇图片 URL
   imageData?: Blob;               // 词汇图片本地数据
+  images?: string[];              // 多图 URL
+  imagesData?: Blob[];            // 多图本地数据
   contextualExamples?: ContextualExample[]; // 新增：来自其他文章的选中的语境例句
 }
 
@@ -121,11 +125,13 @@ export class AppDatabase extends Dexie {
       vocabulary: '++id, paragraphId, word, color'
     });
 
-    // 版本 8: 添加语境例句支持
-    this.version(8).stores({
+    // 版本 9: 支持多图
+    this.version(9).stores({
       projects: '++id, title, createdAt, isSample, templateId, author',
       paragraphs: '++id, projectId, order',
       vocabulary: '++id, paragraphId, word, color'
+    }).upgrade(async (trans) => {
+      // 迁移旧的单图数据到多图数组（可选，因为逻辑上可以兼容处理）
     });
   }
 }
@@ -214,7 +220,7 @@ export async function migrateDatabase(): Promise<void> {
   await migrateFromLegacyDatabases();
 
   const currentVersion = await db.verno;
-  const targetVersion = 8;
+  const targetVersion = 9;
 
   if (currentVersion < targetVersion) {
     await db.open();

@@ -38,13 +38,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-luxury-bg font-sans text-luxury-text selection:bg-luxury-gold/30 overflow-hidden relative">
+    <div className="min-h-screen bg-luxury-bg font-sans text-luxury-text selection:bg-luxury-gold/30 relative">
       <div className="paper-texture" />
 
       <Navigation currentProject={currentProject} />
 
       {/* 主内容区 */}
-      <main className="pt-20 min-h-screen relative z-10">
+      <main className="pt-20 min-h-screen relative">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/present" element={<PresentPage />} />

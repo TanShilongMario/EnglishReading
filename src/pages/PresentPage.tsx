@@ -70,11 +70,13 @@ export const PresentPage: React.FC = () => {
   }
 
   return (
-    <div className="h-[calc(100vh-80px-56px)] overflow-hidden relative">
+    <div className="h-[calc(100vh-80px-56px)] overflow-hidden relative" onClick={() => setActiveWord(null)}>
       <ReaderEngine
         content={currentParagraph.content}
         imageUrl={currentParagraph.image}
         imageData={currentParagraph.imageData}
+        images={currentParagraph.images}
+        imagesData={currentParagraph.imagesData}
         highlightedWords={currentParaVocab}
         onWordClick={handleWordClick}
         fontClass={

@@ -11,7 +11,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentProject }) => {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 h-20 bg-luxury-bg/80 backdrop-blur-md border-b border-luxury-text/10 flex items-center justify-between px-16 z-[60]">
+    <nav className="fixed top-0 left-0 right-0 h-20 bg-luxury-bg/80 backdrop-blur-md border-b border-luxury-text/10 flex items-center justify-between px-16 z-[1000]">
       <Link
         to="/"
         className="flex items-center gap-4 cursor-pointer group"

@@ -9,6 +9,7 @@ function cn(...inputs: ClassValue[]) {
 
 interface FisheyeWordProps {
   word: string;
+  punct?: string; // 新增：紧随其后的标点
   index: number;
   hoveredIndex: number | null;
   isHovered?: boolean;
@@ -23,6 +24,7 @@ interface FisheyeWordProps {
 
 export const FisheyeWord: React.FC<FisheyeWordProps> = ({ 
   word, 
+  punct,
   index,
   hoveredIndex,
   isHovered: externalHovered,
@@ -52,7 +54,7 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
         // 优化挤开空间：从 16 减小到 12，提供足够间隙的同时减少换行压力
         marginLeft: hideMargin ? 0 : (isHovered && shouldScale ? 12 : 4),
         marginRight: hideMargin ? 0 : (isHovered && shouldScale ? 12 : 4),
-        color: isHovered ? highlightColor : 'inherit'
+        color: isHovered ? highlightColor : '#1A1A1A'
       }}
       transition={{ 
         type: 'spring', damping: 25, stiffness: 200,
@@ -75,7 +77,7 @@ export const FisheyeWord: React.FC<FisheyeWordProps> = ({
         animate={{ scale: scale }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
       >
-        {word}
+        {word}{punct}
       </motion.span>
     </motion.span>
   );

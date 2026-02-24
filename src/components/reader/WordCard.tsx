@@ -23,7 +23,8 @@ export const WordCard: React.FC<WordCardProps> = ({ word, templateId = 'english-
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 400, opacity: 0 }}
         transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="fixed right-0 top-20 bottom-0 w-full sm:w-[85vw] lg:w-[450px] bg-luxury-bg border-l border-luxury-text/20 p-6 sm:p-10 lg:p-16 flex flex-col z-[70] shadow-2xl"
+        className="fixed right-0 top-20 bottom-0 w-full sm:w-[85vw] lg:w-[450px] bg-luxury-bg border-l border-luxury-text/20 p-6 sm:p-10 lg:p-16 flex flex-col z-[110] shadow-2xl pointer-events-auto"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* 关闭按钮 */}
         <button
@@ -92,12 +93,15 @@ export const WordCard: React.FC<WordCardProps> = ({ word, templateId = 'english-
               if (fieldKey === 'word') return null;
 
               const value = word[fieldKey];
+              // 图片字段：兼容单图（image/imageData）和多图（images/imagesData）
+              const hasValue = value != null && value !== '' || 
+                             (fieldKey === 'image' && (word.imageData || (word.images && word.images.length > 0) || (word.imagesData && word.imagesData.length > 0)));
 
-              if (!value) return null;
+              if (!hasValue) return null;
 
               return (
                 <section key={fieldKey} className="space-y-4">
-                  <FieldRenderer config={fieldConfig} value={value} word={word} />
+                  <FieldRenderer config={fieldConfig} value={value ?? ''} word={word} />
                 </section>
               );
             })}
@@ -111,11 +115,13 @@ export const WordCard: React.FC<WordCardProps> = ({ word, templateId = 'english-
                 if (!fieldConfig) return null;
 
                 const value = word[fieldKey];
-                if (!value) return null;
+                const hasValue = value != null && value !== '' || 
+                               (fieldKey === 'image' && (word.imageData || (word.images && word.images.length > 0) || (word.imagesData && word.imagesData.length > 0)));
+                if (!hasValue) return null;
 
                 return (
                   <div key={fieldKey}>
-                    <FieldRenderer config={fieldConfig} value={value} word={word} />
+                    <FieldRenderer config={fieldConfig} value={value ?? ''} word={word} />
                   </div>
                 );
               })}

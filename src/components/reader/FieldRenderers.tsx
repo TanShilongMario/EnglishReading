@@ -1,6 +1,9 @@
-import React from 'react';
-import { ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ExternalLink, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { FieldConfig } from '../../config/templates';
+import { parseMarkdown } from '../../utils/markdown';
 
 interface FieldRendererProps {
   config: FieldConfig;
@@ -217,63 +220,185 @@ export const MarkdownField: React.FC<{ config: FieldConfig; value: string; word?
   );
 };
 
-// 图片字段渲染器
-export const ImageField: React.FC<{ config: FieldConfig; value: string; imageData?: Blob; word?: any }> = ({ config, value, imageData }) => {
-  if (!value && !imageData) return null;
+// 图片轮播组件中的放大预览独立成组件以确保 Portal 稳定性
+interface VocabImageZoomProps {
+  images: string[];
+  currentIndex: number;
+  onClose: () => void;
+  onPrev: (e: React.MouseEvent) => void;
+  onNext: (e: React.MouseEvent) => void;
+}
 
-  const [isZoomed, setIsZoomed] = React.useState(false);
-  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+const VocabImageZoom: React.FC<VocabImageZoomProps> = ({ images, currentIndex, onClose, onPrev, onNext }) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') onPrev(new MouseEvent('click') as any);
+      else if (e.key === 'ArrowRight') onNext(new MouseEvent('click') as any);
+      else if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onPrev, onNext, onClose]);
 
-  React.useEffect(() => {
-    if (imageData instanceof Blob) {
-      const url = URL.createObjectURL(imageData);
-      setObjectUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setObjectUrl(null);
-    }
-  }, [imageData]);
-
-  const displayImage = objectUrl || value;
-
-  if (!displayImage) return null;
-
-  return (
-    <div>
-      {config.label && (
-        <p className="text-xxs uppercase tracking-widest text-luxury-muted/60 mb-3">{config.label}</p>
-      )}
-      <div
-        className="w-full overflow-hidden border border-luxury-text/10 cursor-zoom-in group relative"
-        onClick={() => setIsZoomed(true)}
+  return createPortal(
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/95 backdrop-blur-xl p-8 md:p-20"
+      onClick={onClose}
+    >
+      <button 
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute top-8 right-8 p-3 bg-luxury-text text-luxury-bg rounded-full hover:scale-110 transition-transform z-[3100]"
       >
-        <img
-          src={displayImage}
-          alt={config.label}
-          className="w-full h-auto block grayscale group-hover:grayscale-0 transition-all duration-700"
-        />
-      </div>
+        <X size={24} />
+      </button>
 
-      {/* 放大预览 */}
-      {isZoomed && (
-        <div
-          className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-xl p-8"
-          onClick={() => setIsZoomed(false)}
-        >
-          <img
-            src={displayImage}
-            alt="Zoomed"
-            className="max-w-full max-h-full object-contain"
-          />
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={onPrev}
+            className="absolute left-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors z-[3100]"
+          >
+            <ChevronLeft size={48} strokeWidth={1} />
+          </button>
+          <button
+            onClick={onNext}
+            className="absolute right-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors z-[3100]"
+          >
+            <ChevronRight size={48} strokeWidth={1} />
+          </button>
+        </>
+      )}
+
+      <motion.img
+        key={currentIndex}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        src={images[currentIndex]}
+        alt="Zoomed"
+        className="max-w-full max-h-full object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+      
+      {images.length > 1 && (
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-4 py-1 bg-white/10 text-white/60 text-xs tracking-[0.3em] font-bold uppercase">
+          {currentIndex + 1} / {images.length}
         </div>
       )}
+    </motion.div>,
+    document.body
+  );
+};
+
+// 图片轮播组件
+const ImageSlider: React.FC<{ images: string[]; label?: string }> = ({ images, label }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  if (!images || images.length === 0) return null;
+
+  const next = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return (
+    <div className="space-y-3">
+      {label && (
+        <p className="text-xxs uppercase tracking-widest text-luxury-muted/60 mb-3">{label}</p>
+      )}
+      
+      <div className="relative group aspect-video bg-luxury-paper/10 border border-luxury-text/10 overflow-hidden cursor-zoom-in z-10"
+           onClick={(e) => { 
+             e.stopPropagation(); 
+             setIsZoomed(true); 
+           }}>
+        <img
+          src={images[currentIndex]}
+          alt={`${label || 'Image'} ${currentIndex + 1}`}
+          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 pointer-events-none"
+        />
+
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={next}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/60"
+            >
+              <ChevronRight size={20} />
+            </button>
+            <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/40 text-[10px] text-white tracking-widest font-bold">
+              {currentIndex + 1} / {images.length}
+            </div>
+          </>
+        )}
+      </div>
+
+      <AnimatePresence>
+        {isZoomed && (
+          <VocabImageZoom 
+            images={images}
+            currentIndex={currentIndex}
+            onClose={() => setIsZoomed(false)}
+            onPrev={prev}
+            onNext={next}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
+// 图片字段渲染器
+export const ImageField: React.FC<{ config: FieldConfig; value: string; imageData?: Blob; word?: any }> = ({ config, value, imageData, word }) => {
+  const [objectUrls, setObjectUrls] = React.useState<string[]>([]);
+
+  // 创建稳定依赖项，避免对象引用变化导致的死循环
+  const imagesDependency = JSON.stringify(word?.images || []);
+  const imagesDataDependency = (word?.imagesData || []).map((d: any) => `${d.size}_${d.type}`).join('|');
+
+  React.useEffect(() => {
+    // 综合多图数据和单图旧数据
+    const imagesDataList = word?.imagesData || (imageData ? [imageData] : []);
+    const imagesList = word?.images || (value ? [value] : []);
+    
+    const urls = imagesDataList
+      .filter((d: any) => d instanceof Blob)
+      .map((d: any) => URL.createObjectURL(d))
+      .concat(imagesList);
+    setObjectUrls(urls);
+    
+    return () => urls.forEach(url => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    });
+  }, [value, imageData, imagesDependency, imagesDataDependency]);
+
+  if (objectUrls.length === 0) return null;
+
+  return <ImageSlider images={objectUrls} label={config.label} />;
+};
+
+
 // 主字段渲染器（根据类型路由到不同的渲染器）
 export const FieldRenderer: React.FC<FieldRendererProps> = ({ config, value, word }) => {
-  if (value === undefined || value === null || value === '') {
+  // 图片字段：兼容单图和多图渲染判断
+  const hasContent = value !== undefined && value !== null && value !== '' || 
+                    (config.type === 'image' && (word?.imageData || (word?.images && word.images.length > 0) || (word?.imagesData && word.imagesData.length > 0)));
+  if (!hasContent) {
     return null;
   }
 

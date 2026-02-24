@@ -82,6 +82,7 @@ export const VocabularyForm: React.FC<VocabularyFormProps> = ({
     f.key !== 'image'
   );
 
+  // 图片字段需要同时回传 value 与 imageData（Blob），否则本地上传的 file 会丢失
   const renderField = (fieldConfig: any) => (
     <div key={fieldConfig.key} className="space-y-3">
       <label className="text-xs uppercase tracking-widest text-luxury-muted font-bold flex items-center gap-2">
@@ -92,7 +93,14 @@ export const VocabularyForm: React.FC<VocabularyFormProps> = ({
       <FieldInput
         config={fieldConfig}
         value={vocabulary[fieldConfig.key]}
-        onChange={(value) => onChange(fieldConfig.key, value)}
+        onChange={
+          fieldConfig.type === 'image'
+            ? (value: any, imageData?: Blob, images?: string[], imagesData?: Blob[]) => {
+                // 将图片 URL、原始数据以及多图列表作为一个对象传递，确保状态更新的原子性
+                onChange('image_combined', { image: value, imageData, images, imagesData });
+              }
+            : (value: any) => onChange(fieldConfig.key, value)
+        }
         word={vocabulary}
       />
     </div>

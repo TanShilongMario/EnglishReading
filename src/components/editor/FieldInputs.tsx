@@ -106,50 +106,114 @@ export const MarkdownInput: React.FC<{ config: FieldConfig; value: string; onCha
   );
 };
 
-// 图片输入
-export const ImageInput: React.FC<{ config: FieldConfig; value: string; imageData?: Blob; onChange: (value: string, imageData?: Blob) => void }> = ({ config, value, imageData, onChange }) => {
-  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+// 图片输入 (支持多图)
+export const ImageInput: React.FC<{ 
+  config: FieldConfig; 
+  value: string; 
+  imageData?: Blob;
+  images?: string[];
+  imagesData?: Blob[];
+  onChange: (value: string, imageData?: Blob, images?: string[], imagesData?: Blob[]) => void 
+}> = ({ config, value, imageData, images = [], imagesData = [], onChange }) => {
+  const [objectUrls, setObjectUrls] = React.useState<string[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // 综合处理单图（旧数据）和多图（新数据）
+  const allImages = React.useMemo(() => {
+    const list: { url?: string; data?: Blob }[] = [];
+    
+    // 处理多图数据
+    const maxLen = Math.max(images.length, imagesData.length);
+    for (let i = 0; i < maxLen; i++) {
+      list.push({ url: images[i], data: imagesData[i] });
+    }
+    
+    // 如果没有多图但有单图（兼容旧数据），则将单图加入列表
+    if (list.length === 0 && (value || imageData)) {
+      list.push({ url: value, data: imageData });
+    }
+    
+    return list;
+  }, [value, imageData, JSON.stringify(images), (imagesData || []).map(d => d instanceof Blob ? `${d.size}_${d.type}` : '').join('|')]);
+
   React.useEffect(() => {
-    if (imageData instanceof Blob) {
-      const url = URL.createObjectURL(imageData);
-      setObjectUrl(url);
-      return () => URL.revokeObjectURL(url);
+    const urls = allImages.map(img => {
+      if (img.data instanceof Blob) {
+        return URL.createObjectURL(img.data);
+      }
+      return img.url || '';
+    });
+    setObjectUrls(urls);
+    return () => urls.forEach(url => {
+      if (url && url.startsWith('blob:')) URL.revokeObjectURL(url);
+    });
+  }, [allImages]);
+
+  const handleFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      // 保持现有的多图数据，并添加新选择的文件
+      const newImagesData = [...imagesData, ...files];
+      // 清空单图旧数据以避免混淆
+      onChange('', undefined, images, newImagesData);
+    }
+  };
+
+  const handleUrlAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const url = e.currentTarget.value.trim();
+      if (url) {
+        const newImages = [...images, url];
+        onChange('', undefined, newImages, imagesData);
+        e.currentTarget.value = '';
+      }
+    }
+  };
+
+  const removeImage = (index: number) => {
+    // 如果是旧的单图数据
+    if (images.length === 0 && imagesData.length === 0 && (value || imageData)) {
+      onChange('', undefined, [], []);
+      return;
+    }
+
+    const newImages = [...images];
+    const newImagesData = [...imagesData];
+    
+    // 逻辑：如果 index 对应 imagesData，则移除；否则看是否对应 images
+    // 实际上我们在 allImages 构造时是按最大长度合并的。
+    // 为了简单起见，如果 index 在 imagesData 范围内则移除，否则在 images 范围内移除
+    if (index < imagesData.length) {
+      newImagesData.splice(index, 1);
     } else {
-      setObjectUrl(null);
+      newImages.splice(index - imagesData.length, 1);
     }
-  }, [imageData]);
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onChange('', file);
-    }
+    
+    onChange('', undefined, newImages, newImagesData);
   };
-
-  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value, undefined);
-  };
-
-  const displayImage = objectUrl || value;
 
   return (
     <div className="space-y-4">
-      {/* 图片预览 */}
-      {displayImage && (
-        <div className="w-full aspect-video bg-luxury-paper/20 border border-luxury-text/10 overflow-hidden relative group">
-          <img
-            src={displayImage}
-            alt={config.label}
-            className="w-full h-full object-cover"
-          />
-          <button
-            onClick={() => onChange('', undefined)}
-            className="absolute top-2 right-2 p-1 bg-red-800 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <CloseIcon size={12} />
-          </button>
+      {/* 图片列表预览 */}
+      {objectUrls.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {objectUrls.map((url, idx) => (
+            url ? (
+              <div key={idx} className="aspect-video bg-luxury-paper/20 border border-luxury-text/10 overflow-hidden relative group">
+                <img
+                  src={url}
+                  alt={`${config.label} ${idx + 1}`}
+                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all"
+                />
+                <button
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-1 right-1 p-1 bg-red-800 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <CloseIcon size={10} />
+                </button>
+              </div>
+            ) : null
+          ))}
         </div>
       )}
 
@@ -157,25 +221,28 @@ export const ImageInput: React.FC<{ config: FieldConfig; value: string; imageDat
       <div className="flex items-center gap-3">
         <input
           type="text"
-          value={value || ''}
-          onChange={handleUrlChange}
-          placeholder="或输入远程图片地址 (URL)"
-          className="flex-1 bg-transparent text-xs uppercase tracking-widest outline-none border-b border-luxury-text/10 focus:border-luxury-gold transition-colors"
+          onKeyDown={handleUrlAdd}
+          placeholder="输入远程图片地址并回车添加"
+          className="flex-1 bg-transparent text-xs uppercase tracking-widest outline-none border-b border-luxury-text/10 focus:border-luxury-gold transition-colors py-1"
         />
       </div>
 
       {/* 本地上传 */}
-      <label className="cursor-pointer text-xs uppercase tracking-widest font-bold bg-luxury-gold/10 text-luxury-gold px-4 py-2 hover:bg-luxury-gold hover:text-luxury-bg transition-all flex items-center gap-2 w-fit">
-        <Upload size={12} />
-        {displayImage ? '替换图片' : `上传${config.label}`}
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-      </label>
+      <div className="flex flex-col gap-2">
+        <label className="cursor-pointer text-xs uppercase tracking-widest font-bold bg-luxury-gold/10 text-luxury-gold px-4 py-2 hover:bg-luxury-gold hover:text-luxury-bg transition-all flex items-center gap-2 w-fit">
+          <Upload size={12} />
+          {objectUrls.length > 0 ? '添加更多图片' : `上传${config.label}`}
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,image/gif,.gif"
+            className="hidden"
+            onChange={handleFilesSelect}
+          />
+        </label>
+        <p className="text-[10px] text-luxury-muted/60">支持多选上传，支持 JPG、PNG、GIF 格式</p>
+      </div>
     </div>
   );
 };
@@ -196,7 +263,20 @@ export const FieldInput: React.FC<FieldInputProps> = ({ config, value, onChange,
       return <MarkdownInput config={config} value={value || ''} onChange={onChange} />;
 
     case 'image':
-      return <ImageInput config={config} value={value || ''} imageData={word?.imageData} onChange={onChange} />;
+      return (
+        <ImageInput 
+          config={config} 
+          value={value || ''} 
+          imageData={word?.imageData} 
+          images={word?.images}
+          imagesData={word?.imagesData}
+          onChange={(v, d, imgs, dimgs) => {
+            // 这里我们调用父组件传来的 onChange，它可能需要特殊处理多图
+            // 在 VocabularyForm 中，我们会把这些参数封装起来
+            (onChange as any)(v, d, imgs, dimgs);
+          }}
+        />
+      );
 
     default:
       return null;

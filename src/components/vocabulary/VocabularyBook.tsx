@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { db, Project, Vocabulary, Paragraph } from '../../api/db';
-import { BookOpen, Search, ArrowUpRight, Trash2, ChevronRight, Edit, Quote, Book } from 'lucide-react';
+import { BookOpen, Search, ArrowUpRight, Trash2, ChevronRight, Edit, Quote, Book, ChevronLeft, Maximize2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SentenceService, SentenceMatch } from '../../services/SentenceService';
 import { clsx, type ClassValue } from 'clsx';
@@ -23,6 +24,9 @@ const VocabBookEntry: React.FC<{
 }> = ({ vocab, onNavigate, onEdit, onDelete }) => {
   const [allOccurrences, setAllOccurrences] = useState<SentenceMatch[]>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [objectUrls, setObjectUrls] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   useEffect(() => {
     setIsScanning(true);
@@ -33,6 +37,41 @@ const VocabBookEntry: React.FC<{
         setIsScanning(false);
       });
   }, [vocab.word, vocab.matchPattern]);
+
+  // 创建稳定依赖项，避免对象引用变化导致的死循环
+  const imagesDependency = JSON.stringify(vocab.images || []);
+  const imagesDataDependency = (vocab.imagesData || []).map((d: any) => `${d.size}_${d.type}`).join('|');
+
+  useEffect(() => {
+    // 综合多图数据和单图旧数据
+    const imagesDataList = vocab.imagesData || (vocab.imageData ? [vocab.imageData] : []);
+    const imagesList = vocab.images || (vocab.image ? [vocab.image] : []);
+    
+    const urls = imagesDataList
+      .filter((d: any) => d instanceof Blob)
+      .map((d: any) => URL.createObjectURL(d))
+      .concat(imagesList);
+    setObjectUrls(urls);
+    
+    return () => urls.forEach(url => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    });
+  }, [vocab.image, vocab.imageData, imagesDependency, imagesDataDependency]);
+
+  useEffect(() => {
+    if (!isZoomed) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setCurrentImageIndex(prev => (prev - 1 + objectUrls.length) % objectUrls.length);
+      } else if (e.key === 'ArrowRight') {
+        setCurrentImageIndex(prev => (prev + 1) % objectUrls.length);
+      } else if (e.key === 'Escape') {
+        setIsZoomed(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isZoomed, objectUrls.length]);
 
   const renderHighlightedText = (text: string) => {
     if (!vocab.word) return text;
@@ -102,7 +141,90 @@ const VocabBookEntry: React.FC<{
           <p className="text-base font-bold" style={{ color: vocab.color || '#E2B933' }}>{vocab.translation}</p>
           <p className="text-base text-luxury-muted italic leading-relaxed">{vocab.definition}</p>
         </div>
+
+        {/* 单词图片展示 (多图支持) */}
+        {objectUrls.length > 0 && (
+          <div className="mt-6 relative group/imgs">
+            <div 
+              className="aspect-video bg-luxury-paper/10 border border-luxury-text/5 overflow-hidden cursor-zoom-in"
+              onClick={() => setIsZoomed(true)}
+            >
+              <motion.img
+                key={currentImageIndex}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                src={objectUrls[currentImageIndex]}
+                className="w-full h-full object-cover grayscale group-hover/imgs:grayscale-0 transition-all duration-700"
+              />
+            </div>
+            
+            {objectUrls.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => (prev - 1 + objectUrls.length) % objectUrls.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/20 text-white opacity-0 group-hover/imgs:opacity-100 transition-opacity hover:bg-black/40"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => (prev + 1) % objectUrls.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/20 text-white opacity-0 group-hover/imgs:opacity-100 transition-opacity hover:bg-black/40"
+                >
+                  <ChevronRight size={16} />
+                </button>
+                <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-black/40 text-[8px] text-white tracking-widest font-bold">
+                  {currentImageIndex + 1} / {objectUrls.length}
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
+
+      {/* 放大预览 */}
+      <AnimatePresence>
+        {isZoomed && createPortal(
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/95 backdrop-blur-xl p-8"
+            onClick={() => setIsZoomed(false)}
+          >
+            <button className="absolute top-8 right-8 text-white/60 hover:text-white transition-colors">
+              <X size={32} strokeWidth={1} />
+            </button>
+            <motion.img
+              key={currentImageIndex}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              src={objectUrls[currentImageIndex]}
+              className="max-w-full max-h-full object-contain shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            />
+            {objectUrls.length > 1 && (
+              <>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => (prev - 1 + objectUrls.length) % objectUrls.length); }}
+                  className="absolute left-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors"
+                >
+                  <ChevronLeft size={48} strokeWidth={1} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(prev => (prev + 1) % objectUrls.length); }}
+                  className="absolute right-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors"
+                >
+                  <ChevronRight size={48} strokeWidth={1} />
+                </button>
+                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-4 py-1 bg-white/10 text-white/60 text-xs tracking-[0.3em] font-bold uppercase">
+                  {currentImageIndex + 1} / {objectUrls.length}
+                </div>
+              </>
+            )}
+          </motion.div>,
+          document.body
+        )}
+      </AnimatePresence>
 
       {/* 例句展示区 */}
       <div className="px-8 pb-8 space-y-6 flex-1">
@@ -207,7 +329,7 @@ export const VocabularyBook: React.FC<VocabularyBookProps> = ({ onNavigateToArti
   };
 
   return (
-    <div className="flex h-[calc(100vh-80px)] bg-luxury-bg overflow-hidden relative z-10 font-serif">
+    <div className="flex h-[calc(100vh-80px)] bg-luxury-bg overflow-hidden relative font-serif">
       {/* 左侧：课程/文章导航 */}
       <div className="w-1/4 border-r border-luxury-text/10 p-12 overflow-y-auto custom-scrollbar">
         <header className="mb-12 space-y-4">

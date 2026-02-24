@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { FisheyeWord } from './FisheyeWord';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Vocabulary } from '../../api/db';
-import { X, Maximize2 } from 'lucide-react';
+import { X, Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -20,50 +21,109 @@ function hexToRgba(hex: string, opacity: number): string {
 }
 
 interface ImageZoomProps {
-  src: string;
+  images: string[];
+  initialIndex: number;
   onClose: () => void;
 }
 
-const ImageZoom: React.FC<ImageZoomProps> = ({ src, onClose }) => (
-  <motion.div 
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-[100] flex items-center justify-center bg-luxury-bg/90 backdrop-blur-xl p-8 md:p-20"
-    onClick={onClose}
-  >
-    <button 
+const ImageZoom: React.FC<ImageZoomProps> = ({ images, initialIndex, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+      } else if (e.key === 'ArrowRight') {
+        setCurrentIndex((prev) => (prev + 1) % images.length);
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [images.length, onClose]);
+
+  const next = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev + 1) % images.length);
+  };
+
+  const prev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  return createPortal(
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/95 backdrop-blur-xl p-8 md:p-20"
       onClick={onClose}
-      className="absolute top-8 right-8 p-3 bg-luxury-text text-luxury-bg rounded-full hover:scale-110 transition-transform z-[110]"
     >
-      <X size={24} />
-    </button>
-    <motion.img 
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
-      src={src} 
-      alt="Zoomed" 
-      className="max-w-full max-h-full object-contain shadow-2xl"
-      onClick={(e) => e.stopPropagation()}
-    />
-  </motion.div>
-);
+      <button 
+        onClick={onClose}
+        className="absolute top-8 right-8 p-3 bg-luxury-text text-luxury-bg rounded-full hover:scale-110 transition-transform z-[110]"
+      >
+        <X size={24} />
+      </button>
+
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors z-[110]"
+          >
+            <ChevronLeft size={48} strokeWidth={1} />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-8 top-1/2 -translate-y-1/2 p-4 text-white/40 hover:text-white transition-colors z-[110]"
+          >
+            <ChevronRight size={48} strokeWidth={1} />
+          </button>
+        </>
+      )}
+
+      <motion.img 
+        key={currentIndex}
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        src={images[currentIndex]} 
+        alt={`Zoomed ${currentIndex + 1}`} 
+        className="max-w-full max-h-full object-contain shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      />
+      
+          {images.length > 1 && (
+            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 px-4 py-1 bg-white/10 text-white/60 text-xs tracking-[0.3em] font-bold uppercase">
+              {currentIndex + 1} / {images.length}
+            </div>
+          )}
+    </motion.div>,
+    document.body
+  );
+};
 
 interface ReaderEngineProps {
   content: string;
   imageUrl?: string;
   imageData?: Blob;
-  highlightedWords: Vocabulary[]; // 改为传递完整的词汇对象
+  images?: string[];
+  imagesData?: Blob[];
+  highlightedWords: Vocabulary[]; 
   onWordClick?: (word: string) => void;
-  fontClass?: string; // 新增：自定义字体类名
-  templateId?: string; // 新增：模板ID，用于判断是否为中文内容
+  fontClass?: string; 
+  templateId?: string; 
 }
 
 export const ReaderEngine: React.FC<ReaderEngineProps> = ({
   content,
   imageUrl,
   imageData,
+  images = [],
+  imagesData = [],
   highlightedWords,
   onWordClick,
   fontClass = 'font-serif',
@@ -71,20 +131,41 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
 }) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [hoveredVocabId, setHoveredVocabId] = useState<number | null>(null);
-  const [objectUrl, setObjectUrl] = React.useState<string | null>(null);
+  const [objectUrls, setObjectUrls] = useState<string[]>([]);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  React.useEffect(() => {
-    if (imageData instanceof Blob) {
-      const url = URL.createObjectURL(imageData);
-      setObjectUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setObjectUrl(null);
-    }
-  }, [imageData]);
+  // 创建稳定依赖项，避免空数组导致的死循环
+  const imagesDependency = JSON.stringify(images);
+  const imagesDataDependency = imagesData.map(d => `${d.size}_${d.type}`).join('|');
 
-  const displayImage = objectUrl || imageUrl;
+  useEffect(() => {
+    // 综合处理单图和多图
+    const currentImagesData = imagesData.length > 0 ? imagesData : (imageData ? [imageData] : []);
+    const currentImages = images.length > 0 ? images : (imageUrl ? [imageUrl] : []);
+    
+    const urls = currentImagesData
+      .filter(d => d instanceof Blob)
+      .map(d => URL.createObjectURL(d as Blob))
+      .concat(currentImages);
+    setObjectUrls(urls);
+    
+    return () => urls.forEach(url => {
+      if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+    });
+  }, [imageUrl, imageData, imagesDependency, imagesDataDependency]);
+
+  const nextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev + 1) % objectUrls.length);
+  };
+
+  const prevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentImageIndex((prev) => (prev - 1 + objectUrls.length) % objectUrls.length);
+  };
+
+  const displayImage = objectUrls[currentImageIndex];
 
   // 检测文本是否主要为中文
   const isChineseText = React.useMemo(() => {
@@ -135,23 +216,24 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
     
     for (let i = 0; i < rawSegments.length; i++) {
       const current = rawSegments[i];
-      const next = rawSegments[i + 1];
-      
       const isSpace = /^\s+$/.test(current);
       const isPunct = /^[.,!?;:()]$/.test(current);
       
-      // 如果当前是单词，且下一个是标点符号，则将它们合并
-      if (!isSpace && !isPunct && next && /^[.,!?;:()]$/.test(next)) {
+      if (isSpace) {
         result.push({
-          type: 'word-with-punct',
-          word: current,
-          punct: next,
+          type: 'space',
+          content: current,
           index: i
         });
-        i++; // 跳过已合并的标点
+      } else if (isPunct) {
+        result.push({
+          type: 'punct',
+          content: current,
+          index: i
+        });
       } else {
         result.push({
-          type: isSpace ? 'space' : (isPunct ? 'punct' : 'word'),
+          type: 'word',
           content: current,
           index: i
         });
@@ -284,7 +366,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
             }}
             onMouseEnter={() => setHoveredVocabId(vocab.id!)}
             onMouseLeave={() => setHoveredVocabId(null)}
-            onClick={() => onWordClick?.(vocab.word)}
+            onClick={(e) => { e.stopPropagation(); onWordClick?.(vocab.word); }}
           >
             {phraseItems.map((item) => {
               if (item.type === 'space') {
@@ -306,32 +388,33 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
 
               if (item.type === 'punct') {
                 return (
-                  <span key={item.index} className={cn("inline text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
+                  <motion.span 
+                    key={item.index} 
+                    className={cn("inline-block text-[22px] text-luxury-text px-0.5", fontClass)}
+                    animate={{ 
+                      scale: isPhraseHovered ? 1.2 : 1
+                    }}
+                    transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                    style={{ opacity: 1 }}
+                  >
                     {item.content}
-                  </span>
+                  </motion.span>
                 );
               }
 
               const wordToMatch = item.word || item.content;
-              const isWordWithPunct = item.type === 'word-with-punct' && item.punct;
               return (
-                <React.Fragment key={item.index}>
-                  <FisheyeWord
-                    index={item.index}
-                    word={wordToMatch}
-                    hoveredIndex={null}
-                    isHovered={isPhraseHovered}
-                    isHighlighted={true}
-                    color={vocab.color}
-                    hideMargin={true}
-                    fontClass={fontClass}
-                  />
-                  {isWordWithPunct && (
-                    <span className={cn("text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
-                      {item.punct}
-                    </span>
-                  )}
-                </React.Fragment>
+                <FisheyeWord
+                  key={item.index}
+                  index={item.index}
+                  word={wordToMatch}
+                  hoveredIndex={null}
+                  isHovered={isPhraseHovered}
+                  isHighlighted={true}
+                  color={vocab.color}
+                  hideMargin={true}
+                  fontClass={fontClass}
+                />
               );
             })}
           </motion.span>
@@ -339,23 +422,23 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
         i = j - 1; // 跳过已处理的项目
       } else {
         // 非高亮内容
+        // 探测左右邻居是否正在被 Hover，且邻居必须是重点词汇（即会放大的词）
+        const prevGroup = groups[i - 1];
+        const nextGroup = groups[i + 1];
+        
+        const isPrevScaling = prevGroup && (
+          (hoveredIndex === prevGroup.index && false) || // 普通词不放大
+          (segmentVocabMap[prevGroup.index] && (hoveredIndex === prevGroup.index || hoveredVocabId === segmentVocabMap[prevGroup.index].id))
+        );
+        
+        const isNextScaling = nextGroup && (
+          (hoveredIndex === nextGroup.index && false) || // 普通词不放大
+          (segmentVocabMap[nextGroup.index] && (hoveredIndex === nextGroup.index || hoveredVocabId === segmentVocabMap[nextGroup.index].id))
+        );
+
+        const isNeighborScaling = isPrevScaling || isNextScaling;
+
         if (group.type === 'space') {
-          // 探测左右邻居是否正在被 Hover，且邻居必须是重点词汇（即会放大的词）
-          const prevGroup = groups[i - 1];
-          const nextGroup = groups[i + 1];
-          
-          const isPrevScaling = prevGroup && (
-            (hoveredIndex === prevGroup.index && false) || // 普通词不放大
-            (segmentVocabMap[prevGroup.index] && (hoveredIndex === prevGroup.index || hoveredVocabId === segmentVocabMap[prevGroup.index].id))
-          );
-          
-          const isNextScaling = nextGroup && (
-            (hoveredIndex === nextGroup.index && false) || // 普通词不放大
-            (segmentVocabMap[nextGroup.index] && (hoveredIndex === nextGroup.index || hoveredVocabId === segmentVocabMap[nextGroup.index].id))
-          );
-
-          const isNeighborScaling = isPrevScaling || isNextScaling;
-
           const hasNewline = group.content?.includes('\n');
           elements.push(
             <motion.span 
@@ -373,9 +456,19 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
           );
         } else if (group.type === 'punct') {
           elements.push(
-            <span key={group.index} className={cn("text-[22px] text-luxury-muted opacity-40 px-0.5 italic", fontClass)}>
+            <motion.span 
+              key={group.index} 
+              className={cn("inline-block text-[22px] text-luxury-text px-0.5", fontClass)}
+              animate={{ 
+                scale: isNeighborScaling ? 1.2 : 1,
+                marginLeft: isPrevScaling ? 12 : 0,
+                marginRight: isNextScaling ? 12 : 0,
+              }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              style={{ opacity: 1 }}
+            >
               {group.content}
-            </span>
+            </motion.span>
           );
         } else {
           const wordToMatch = group.word || group.content;
@@ -391,13 +484,6 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               onMouseLeave={() => setHoveredIndex(null)}
             />
           );
-          if (group.type === 'word-with-punct') {
-            elements.push(
-              <span key={`punct-${group.index}`} className={cn("text-[22px] text-luxury-muted opacity-40 italic pr-1", fontClass)}>
-                {group.punct}
-              </span>
-            );
-          }
         }
       }
     }
@@ -415,14 +501,40 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.5, ease: [0.25, 0.46, 0.45, 0.94] }}
               className="w-full h-full relative group overflow-hidden border border-luxury-text/5 cursor-zoom-in"
-              onClick={() => setIsImageZoomed(true)}
+              onClick={(e) => { e.stopPropagation(); setIsImageZoomed(true); }}
             >
-              <img 
+              <motion.img 
+                key={currentImageIndex}
+                initial={{ opacity: 0, scale: 1.05 }}
+                animate={{ opacity: 1, scale: 1 }}
                 src={displayImage} 
                 alt="Editorial" 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 scale-105 group-hover:scale-100 transition-all duration-[2000ms] ease-out" 
+                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-[2000ms] ease-out" 
               />
-              <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-4">
+              
+              {/* 导航箭头 */}
+              {objectUrls.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-luxury-bg/80 text-luxury-text backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-luxury-text hover:text-luxury-bg border border-luxury-text/10"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-luxury-bg/80 text-luxury-text backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-luxury-text hover:text-luxury-bg border border-luxury-text/10"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                  
+                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 bg-luxury-bg/80 text-luxury-text backdrop-blur-md text-[10px] tracking-[0.2em] font-bold border border-luxury-text/10">
+                    {currentImageIndex + 1} / {objectUrls.length}
+                  </div>
+                </>
+              )}
+
+              <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-4 pointer-events-none">
                 <div className="bg-luxury-bg/90 p-2 shadow-sm border border-luxury-text/10">
                   <Maximize2 size={14} className="text-luxury-text/60" />
                 </div>
@@ -436,8 +548,12 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
 
         {/* 图片放大模态框 */}
         <AnimatePresence>
-          {isImageZoomed && displayImage && (
-            <ImageZoom src={displayImage} onClose={() => setIsImageZoomed(false)} />
+          {isImageZoomed && objectUrls.length > 0 && (
+            <ImageZoom 
+              images={objectUrls} 
+              initialIndex={currentImageIndex}
+              onClose={() => setIsImageZoomed(false)} 
+            />
           )}
         </AnimatePresence>
 

@@ -121,56 +121,61 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
   },
 
   initializeSampleData: async () => {
-    return await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
-      const samples = [
-        { data: SAMPLE_PROJECT, name: '英语精读示例', templateId: 'english-reading' },
-        { data: SAMPLE_BOOK_NOTES, name: '读书笔记示例', templateId: 'knowledge-notes' }
-      ];
+    try {
+      return await db.transaction('rw', [db.projects, db.paragraphs, db.vocabulary], async () => {
+        const samples = [
+          { data: SAMPLE_PROJECT, name: '英语精读示例', templateId: 'english-reading' },
+          { data: SAMPLE_BOOK_NOTES, name: '读书笔记示例', templateId: 'knowledge-notes' }
+        ];
 
-      let createdNew = false;
+        let createdNew = false;
 
-      // 获取所有现有的示例项目
-      const existingSamples = await db.projects
-        .where('isSample')
-        .equals(true)
-        .toArray();
+        // 获取所有现有的示例项目
+        const existingSamples = await db.projects
+          .where('isSample')
+          .equals(true)
+          .toArray();
 
-      for (const sample of samples) {
-        // 检查是否已存在该示例（通过 title）
-        const exists = existingSamples.some(p => p.title === sample.data.project.title);
+        for (const sample of samples) {
+          // 检查是否已存在该示例（通过 title）
+          const exists = existingSamples.some(p => p.title === sample.data.project.title);
 
-        if (exists) {
-          // 已存在，跳过
-          continue;
-        }
-
-        // 不存在，创建示例项目
-        const projectId = await db.projects.add({
-          ...sample.data.project,
-          isSample: true,
-          templateId: sample.templateId
-        } as Project);
-
-        for (const para of sample.data.paragraphs) {
-          const { vocabulary, ...paraData } = para;
-          const paragraphId = await db.paragraphs.add({
-            ...paraData,
-            projectId: projectId as number,
-          } as Paragraph);
-
-          for (const vocab of vocabulary) {
-            await db.vocabulary.add({
-              ...vocab,
-              paragraphId: paragraphId as number
-            } as Vocabulary);
+          if (exists) {
+            // 已存在，跳过
+            continue;
           }
+
+          // 不存在，创建示例项目
+          const projectId = await db.projects.add({
+            ...sample.data.project,
+            isSample: true,
+            templateId: sample.templateId
+          } as Project);
+
+          for (const para of sample.data.paragraphs) {
+            const { vocabulary, ...paraData } = para;
+            const paragraphId = await db.paragraphs.add({
+              ...paraData,
+              projectId: projectId as number,
+            } as Paragraph);
+
+            for (const vocab of vocabulary) {
+              await db.vocabulary.add({
+                ...vocab,
+                paragraphId: paragraphId as number
+              } as Vocabulary);
+            }
+          }
+
+          createdNew = true;
         }
 
-        createdNew = true;
-      }
-
-      return createdNew;
-    });
+        return createdNew;
+      });
+    } catch (error) {
+      console.error('初始化示例数据失败:', error);
+      return false;
+    }
   },
 
   resetSampleData: async () => {
