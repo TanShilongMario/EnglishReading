@@ -324,7 +324,7 @@ const ImageSlider: React.FC<{ images: string[]; label?: string }> = ({ images, l
         <img
           src={images[currentIndex]}
           alt={`${label || 'Image'} ${currentIndex + 1}`}
-          className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 pointer-events-none"
+          className="w-full h-full object-cover transition-all duration-700 pointer-events-none"
         />
 
         {images.length > 1 && (

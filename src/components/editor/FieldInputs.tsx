@@ -203,7 +203,7 @@ export const ImageInput: React.FC<{
                 <img
                   src={url}
                   alt={`${config.label} ${idx + 1}`}
-                  className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all"
+                  className="w-full h-full object-cover hover:transition-all"
                 />
                 <button
                   onClick={() => removeImage(idx)}

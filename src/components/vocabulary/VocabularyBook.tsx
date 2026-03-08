@@ -154,7 +154,7 @@ const VocabBookEntry: React.FC<{
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 src={objectUrls[currentImageIndex]}
-                className="w-full h-full object-cover grayscale group-hover/imgs:grayscale-0 transition-all duration-700"
+                className="w-full h-full object-cover transition-all duration-700"
               />
             </div>
             

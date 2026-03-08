@@ -509,7 +509,7 @@ export const ReaderEngine: React.FC<ReaderEngineProps> = ({
                 animate={{ opacity: 1, scale: 1 }}
                 src={displayImage} 
                 alt="Editorial" 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-[2000ms] ease-out" 
+                className="w-full h-full object-cover transition-all duration-[2000ms] ease-out" 
               />
               
               {/* 导航箭头 */}

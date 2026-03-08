@@ -568,7 +568,7 @@ export const EditorMode: React.FC<EditorModeProps> = ({ initialParagraphId, init
                 {/* 封面编辑 */}
                 <div className="w-32 h-44 bg-luxury-paper/30 border border-luxury-text/10 overflow-hidden relative group/cover cursor-pointer shrink-0">
                   {coverImageUrl ? (
-                    <img src={coverImageUrl} className="w-full h-full object-cover grayscale group-hover/cover:grayscale-0 transition-all" />
+                    <img src={coverImageUrl} className="w-full h-full object-cover transition-all" />
                   ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-luxury-muted/40">
                       <ImageIcon size={24} strokeWidth={1} />
